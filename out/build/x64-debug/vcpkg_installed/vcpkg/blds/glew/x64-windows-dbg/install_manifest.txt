@@ -1,0 +1,12 @@
+C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/pkgs/glew_x64-windows/debug/lib/glew32d.lib
+C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/pkgs/glew_x64-windows/debug/bin/glew32d.dll
+C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/pkgs/glew_x64-windows/debug/lib/pkgconfig/glew.pc
+C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/pkgs/glew_x64-windows/debug/lib/glew32d.pdb
+C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/pkgs/glew_x64-windows/debug/include/GL/wglew.h
+C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/pkgs/glew_x64-windows/debug/include/GL/glew.h
+C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/pkgs/glew_x64-windows/debug/include/GL/glxew.h
+C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/pkgs/glew_x64-windows/debug/include/GL/eglew.h
+C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/pkgs/glew_x64-windows/debug/lib/cmake/glew/glew-targets.cmake
+C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/pkgs/glew_x64-windows/debug/lib/cmake/glew/glew-targets-debug.cmake
+C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/pkgs/glew_x64-windows/debug/lib/cmake/glew/glew-config.cmake
+C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/pkgs/glew_x64-windows/debug/lib/cmake/glew/CopyImportedTargetProperties.cmake

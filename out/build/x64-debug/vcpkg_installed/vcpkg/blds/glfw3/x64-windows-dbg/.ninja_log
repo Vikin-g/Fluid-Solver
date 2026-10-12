@@ -1,0 +1,26 @@
+# ninja log v7
+43	638	8119448846819503	src/CMakeFiles/glfw.dir/platform.c.obj	60b674fe8d048609
+138	654	8119448847670688	src/CMakeFiles/glfw.dir/win32_time.c.obj	f5c1a2b3548804a3
+156	665	8119448847928417	src/CMakeFiles/glfw.dir/win32_init.c.obj	53c9daa0388aa3c5
+64	676	8119448847025230	src/CMakeFiles/glfw.dir/window.c.obj	aa674c4ea0d90b11
+85	678	8119448847182716	src/CMakeFiles/glfw.dir/osmesa_context.c.obj	111265bc17c23bc9
+106	682	8119448847411888	src/CMakeFiles/glfw.dir/null_monitor.c.obj	358abecc2be76eae
+8	684	8119448846390986	src/CMakeFiles/glfw.dir/context.c.obj	f805f8fc00011f47
+122	687	8119448847610222	src/CMakeFiles/glfw.dir/null_joystick.c.obj	f66927bea1faac98
+54	690	8119448846905317	src/CMakeFiles/glfw.dir/vulkan.c.obj	e09907e3d2ea9816
+112	693	8119448847498048	src/CMakeFiles/glfw.dir/null_window.c.obj	6200207c8b03c436
+33	697	8119448846704910	src/CMakeFiles/glfw.dir/monitor.c.obj	3bf4b978683d036f
+25	701	8119448846642451	src/CMakeFiles/glfw.dir/input.c.obj	831c3b45de1a6120
+132	704	8119448847670688	src/CMakeFiles/glfw.dir/win32_module.c.obj	d4b3ee481b07ad2a
+166	706	8119448848036506	src/CMakeFiles/glfw.dir/win32_joystick.c.obj	56f4e780d5c8fbaf
+18	709	8119448846547197	src/CMakeFiles/glfw.dir/init.c.obj	a10fd16b21a08756
+148	738	8119448847810794	src/CMakeFiles/glfw.dir/win32_thread.c.obj	f2e8669ed725a239
+176	742	8119448848150444	src/CMakeFiles/glfw.dir/win32_monitor.c.obj	12edc15df7720323
+95	746	8119448847340043	src/CMakeFiles/glfw.dir/null_init.c.obj	781ff613eabfe4f4
+74	750	8119448847035329	src/CMakeFiles/glfw.dir/egl_context.c.obj	78c2fe25d4318fc2
+665	770	8119448853045497	src/CMakeFiles/glfw.dir/glfw.rc.res	4e33bff6e7255b02
+655	901	8119448852940030	src/CMakeFiles/glfw.dir/wgl_context.c.obj	fce8201395467bab
+641	906	8119448852799312	src/CMakeFiles/glfw.dir/win32_window.c.obj	3e6c84d41c0822b0
+907	1300	8119448859053146	src/glfw3.dll	e7bf6b8b1855d72d
+907	1300	8119448859053146	src/glfw3dll.lib	e7bf6b8b1855d72d
+1300	1549	8119448859380887	CMakeFiles/install.util	7de524529900e760
