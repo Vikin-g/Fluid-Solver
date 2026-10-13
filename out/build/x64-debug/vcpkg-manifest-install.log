@@ -1,13 +1,43 @@
+Fetching registry information from https://github.com/microsoft/vcpkg (HEAD)...
 Detecting compiler hash for triplet x64-windows...
 Compiler found: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe
-The following packages are already installed:
-  * egl-registry:x64-windows@2025-05-27
-    glew:x64-windows@2.3.1
-    glfw3:x64-windows@3.4#1
-    opengl:x64-windows@2022-12-04#3
-  * opengl-registry:x64-windows@2026-01-26
-  * vcpkg-cmake:x64-windows@2024-04-23
-  * vcpkg-cmake-config:x64-windows@2026-07-21
+The following packages will be built and installed:
+  * egl-registry:x64-windows@2025-05-27 -- git+https://github.com/microsoft/vcpkg@980ed62fded868a1cb66460b32704aca030af013
+    glew:x64-windows@2.3.1 -- git+https://github.com/microsoft/vcpkg@edfc7053968c85e646897acc2f6f1c94d1690499
+    glfw3:x64-windows@3.4#1 -- git+https://github.com/microsoft/vcpkg@d4bbd4f27c2ca619f57778985120cddcedadb1cc
+    opengl:x64-windows@2022-12-04#3 -- git+https://github.com/microsoft/vcpkg@c3ae71738f88449ebcd781cef60d9a253fa091d4
+  * opengl-registry:x64-windows@2026-01-26 -- git+https://github.com/microsoft/vcpkg@0cd17c3b57221250d5ba174580f0a2993853ce34
+  * vcpkg-cmake:x64-windows@2024-04-23 -- git+https://github.com/microsoft/vcpkg@e74aa1e8f93278a8e71372f1fa08c3df420eb840
+  * vcpkg-cmake-config:x64-windows@2026-07-21 -- git+https://github.com/microsoft/vcpkg@51befcb03097f8d19c1c59f9ec3625e69d85322a
+Additional packages (*) will be modified to complete this operation.
+Restored 7 package(s) from C:\Users\lucas\AppData\Local\vcpkg\archives in 533 ms. Use --debug to see more details.
+Installing 1/7 vcpkg-cmake-config:x64-windows@2026-07-21...
+vcpkg-cmake-config:x64-windows@2026-07-21 package ABI: 0dabb28968042a6d455b86e27c82f32c99b04990cf4c67cb1ff7a1bc3b3971f7
+Elapsed time to handle vcpkg-cmake-config:x64-windows: 98.2 ms
+Installing 2/7 vcpkg-cmake:x64-windows@2024-04-23...
+vcpkg-cmake:x64-windows@2024-04-23 package ABI: 452c11a9b8e879f106ba6fa986d153fa2a9051916008b4ea16c88f4159f28aba
+Elapsed time to handle vcpkg-cmake:x64-windows: 140 ms
+Installing 3/7 egl-registry:x64-windows@2025-05-27...
+egl-registry:x64-windows@2025-05-27 package ABI: 5e6c8494ccf3fceeef81b6f2a0cc04897d20a37e04dc481e2e7095ddd5c6459a
+Elapsed time to handle egl-registry:x64-windows: 40 ms
+Installing 4/7 opengl-registry:x64-windows@2026-01-26...
+opengl-registry:x64-windows@2026-01-26 package ABI: b0416a3dd1a196ceb65e932e1fed3977bc83818fd24c778c2cd0bee76c36581e
+Elapsed time to handle opengl-registry:x64-windows: 86.6 ms
+Installing 5/7 opengl:x64-windows@2022-12-04#3...
+opengl:x64-windows@2022-12-04#3 package ABI: e0759e8a8d0d3f073c69a2491dc582abe9a4b4601b56b5bfdb4f777a8a919af4
+Elapsed time to handle opengl:x64-windows: 66 ms
+Installing 6/7 glew:x64-windows@2.3.1...
+glew:x64-windows@2.3.1 package ABI: 45552b19b7a469a8b2c087ccf3799c96091b69399219bb647c157313e24875f9
+Elapsed time to handle glew:x64-windows: 103 ms
+Installing 7/7 glfw3:x64-windows@3.4#1...
+glfw3:x64-windows@3.4#1 package ABI: 454eb61d989d7db73062db23515c062b2175ccd469ca7941035723de5aec8844
+Elapsed time to handle glfw3:x64-windows: 90.3 ms
+Installed contents are licensed to you by owners. Microsoft is not responsible for, nor does it grant any licenses to, third-party packages.
+Some packages did not declare an SPDX license. Check the `copyright` file for each package for more information about their licensing.
+Packages installed in this vcpkg installation declare the following licenses:
+Apache-2.0
+MIT
+Zlib
 The package opengl is compatible with built-in CMake targets via CMake v3.7 and prior syntax
 
     find_package(OpenGL REQUIRED)
@@ -59,4 +89,4 @@ glfw3 provides pkg-config modules:
   # A multi-platform library for OpenGL, window and input
   glfw3
 
-All requested installations completed successfully in: 506 us
+All requested installations completed successfully in: 641 ms

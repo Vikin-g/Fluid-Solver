@@ -1,8 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/blds/glfw3/x64-windows-rel/cmake_install.cmake",
-		"C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/blds/glfw3/x64-windows-rel/src/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

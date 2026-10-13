@@ -1,8 +1,0 @@
-C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/blds/glew/x64-windows-rel/CMakeFiles/glew.dir
-C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/blds/glew/x64-windows-rel/CMakeFiles/glew_s.dir
-C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/blds/glew/x64-windows-rel/CMakeFiles/uninstall.dir
-C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/blds/glew/x64-windows-rel/CMakeFiles/edit_cache.dir
-C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/blds/glew/x64-windows-rel/CMakeFiles/rebuild_cache.dir
-C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/blds/glew/x64-windows-rel/CMakeFiles/list_install_components.dir
-C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/blds/glew/x64-windows-rel/CMakeFiles/install.dir
-C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/blds/glew/x64-windows-rel/CMakeFiles/install/local.dir

@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/vcpkg_installed/vcpkg/blds/glew/x64-windows-dbg/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

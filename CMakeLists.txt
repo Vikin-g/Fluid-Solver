@@ -22,13 +22,9 @@ find_package(GLEW REQUIRED)
 
 add_executable(euler_method 
 	"euler_method.cpp"
-	"src/objects.cpp"
-    "src/objects.h"
 )
-
+target_include_directories(euler_method PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 set(DEPS glfw GLEW::GLEW OpenGL::GL)
-target_link_libraries(euler_method PRIVATE 
-DEPS
-)
+target_link_libraries(euler_method PRIVATE ${DEPS})
 
 # TODO: Add tests and install targets if needed.
