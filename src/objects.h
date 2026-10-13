@@ -8,12 +8,16 @@ struct LATTICE
 	float v_down = 0;
 	float v_left = 0;
 	float v_right = 0;
+
+	int size;
 	
 	float positions[8];
 
 	bool is_border = false;
 
 	LATTICE(int size, int x, int y, int posinitx, int posinity);
+
+	float Divergence_Vitesse_Cell();
 };
 
 class FIELD

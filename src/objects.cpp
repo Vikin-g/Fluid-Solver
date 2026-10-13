@@ -18,13 +18,26 @@ LATTICE::LATTICE(int size, int x, int y, int posinitx, int posinity)
 	while (i < 8)
 	{
 		if ((i + 1) % 2 != 0) {
-			positions[i] = posinitx + x + (size * pos[i]);	//translate position field to position window for quad
+			positions[i] = posinitx + x + (size * pos[i]);	//translate position in field to position in window for quad
 		}
 		else {
 			positions[i] = posinity + y + (size * pos[i]);
 		}
 		i += 1;
 	}
+	size = size;
+}
+
+LATTICE::Divergence_Vitesse_Cell()
+{
+
+	// v par rapport à la cellule----------------- Finite difference approximation
+	float gradient_x = (v_right - v_left) / size;
+	float gradient_y = (v_down - v_up) / size;
+
+	float gradient = gradient_x + gradient_y;
+
+	return gradient;
 }
 
 FIELD::FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size)
