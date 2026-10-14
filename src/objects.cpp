@@ -26,18 +26,9 @@ LATTICE::LATTICE(int size, int x, int y, int posinitx, int posinity)
 		i += 1;
 	}
 	size = size;
-}
 
-LATTICE::Divergence_Vitesse_Cell()
-{
-
-	// v par rapport à la cellule----------------- Finite difference approximation
-	float gradient_x = (v_right - v_left) / size;
-	float gradient_y = (v_down - v_up) / size;
-
-	float gradient = gradient_x + gradient_y;
-
-	return gradient;
+	rel_x = x;
+	rel_y = y;
 }
 
 FIELD::FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size)
@@ -47,14 +38,27 @@ FIELD::FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size)
 
 void FIELD::CreateField() 
 {
+
+	VelocityX = new float[resx + 1][resy];
+	VelocityY = new float[resx][resy + 1];
+
 	for (int x = 0;x < resx;x++)
 	{
 		vector_field.push_back(std::vector<LATTICE>());
 		for (int y = 0; y < resy; y++)
 		{
 			vector_field[x].push_back(LATTICE(size, x, y, InPosx, InPosy)); //intialize field
+			VelocityY[x][y] = 0.0f;					//initialize array of velocities in-between cells
 		}
+		VelocityY[x][-1] = 0.0f;
 	}
+
+	for (int i = 0; i < VelocityX.size();i++)
+	{
+		for (int j = 0; j < resy; j++)
+			VelocityX[i][j] = 0.0f;
+	}
+	
 }
 
 void FIELD::EnableBorder() 
@@ -66,10 +70,25 @@ void FIELD::EnableBorder()
 	}
 }
 
+void FIELD::Divergence_Vitesse_Cell(int x, int y)		//divergence at cell index x and y
+{
+	LATTICE& cell = vector_field[x][y];
+	float gradient_x = (VelocityX[x+1][y] - VelocityX[x][y]) / cell.size;
+	float gradient_y = (VelocityY[x][y + 1] - VelocityY[x][y])/cell.size;
+
+	cell.divergence = gradient_x + gradient_y;
+}
+
 void FIELD::InFlow(float speed_ms)
 {
 	for (int i = 1; i < resy - 1;i++)
 	{
-		vector_field[0][i].v_right = speed_ms;
+		VelocityX[0][i] = speed_ms;
 	}
+}
+
+FIELD::~FIELD()
+{
+	delete[] VelocityX;
+	delete[] VelocityY;
 }

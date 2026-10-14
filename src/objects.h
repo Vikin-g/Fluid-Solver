@@ -4,25 +4,23 @@
 
 struct LATTICE
 {
-	float v_up = 0;
-	float v_down = 0;
-	float v_left = 0;
-	float v_right = 0;
+	int rel_x;
+	int rel_y;
 
 	int size;
+
+	float divergence;
 	
 	float positions[8];
 
 	bool is_border = false;
 
 	LATTICE(int size, int x, int y, int posinitx, int posinity);
-
-	float Divergence_Vitesse_Cell();
 };
 
 class FIELD
 {
-public:
+private:
 	int resx;
 	int resy;
 	int size;
@@ -30,13 +28,19 @@ public:
 	int InPosx;
 	int InPosy;
 
-	std::vector<std::vector<LATTICE>> vector_field;
+	float* VelocityX;
+	float* VelocityY;
 
+	std::vector<std::vector<LATTICE>> vector_field;
+public:
 	FIELD(int pos1x,int pos1y,int Resx,int Resy,int Size);
+	~FIELD();
 
 	void CreateField();
 
 	void EnableBorder();
+
+	void Divergence_Vitesse_Cell(int x,int y);
 
 	void InFlow(float speed_ms);
 };
