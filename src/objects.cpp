@@ -38,27 +38,24 @@ FIELD::FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size)
 
 void FIELD::CreateField() 
 {
+	vector_field = new LATTICE* [resx];
+	VelocityX = new float[(resx + 1]) * resy];
+	VelocityY = new float[resx * (resy + 1)];
 
-	VelocityX = new float[resx + 1][resy];
-	VelocityY = new float[resx][resy + 1];
-
-	for (int x = 0;x < resx;x++)
+	for (int y = 0;y < resy;y++)
 	{
-		vector_field.push_back(std::vector<LATTICE>());
-		for (int y = 0; y < resy; y++)
+		for (int x = 0; x < resx; x++)
 		{
-			vector_field[x].push_back(LATTICE(size, x, y, InPosx, InPosy)); //intialize field
-			VelocityY[x][y] = 0.0f;					//initialize array of velocities in-between cells
-		}
-		VelocityY[x][-1] = 0.0f;
-	}
+			vector_field[x] = new LATTICE[resy];								//intialize field
+			vector_field[x][y] = LATTICE(size, x, y, InPosx, InPosy);
 
-	for (int i = 0; i < VelocityX.size();i++)
-	{
-		for (int j = 0; j < resy; j++)
-			VelocityX[i][j] = 0.0f;
+			VelocityY[x + y * resx] = 0.0f;										//initialize array of velocities in-between cells
+			VelocityY[x + resx * resy] = 0.0f;									// add extra top value 
+
+			VelocityX[x + y * (resx+1)] = 0.0f;
+		}
+		VelocityX[resx + y * resx] = 0.0f;										// add extra right value
 	}
-	
 }
 
 void FIELD::EnableBorder() 
@@ -91,4 +88,8 @@ FIELD::~FIELD()
 {
 	delete[] VelocityX;
 	delete[] VelocityY;
+
+	for (int i = 0; i < vector_field.size(); i++)
+		delete[] vector_field[i];
+	delete[] vector_field;
 }

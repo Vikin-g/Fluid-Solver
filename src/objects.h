@@ -31,8 +31,10 @@ private:
 	float* VelocityX;
 	float* VelocityY;
 
-	std::vector<std::vector<LATTICE>> vector_field;
 public:
+	
+	LATTICE** vector_field;
+	
 	FIELD(int pos1x,int pos1y,int Resx,int Resy,int Size);
 	~FIELD();
 
