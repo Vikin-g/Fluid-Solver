@@ -38,7 +38,7 @@ struct ECRAN
 	}
 };
 
-//ECRAN ecran;
+ECRAN ecran;
 
 
 

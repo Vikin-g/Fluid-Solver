@@ -29,7 +29,7 @@ CELL::CELL(int size, int x, int y, int posinitx, int posinity)
 }
 
 FIELD::FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size)
-	:InPosx(pos1x),InPosy(pos1y), resx(Resx), resy(Resy), size(size)
+	:InPosx(pos1x),InPosy(pos1y), resx(Resx), resy(Resy), size(Size)
 { }
 
 void FIELD::CreateField() 
