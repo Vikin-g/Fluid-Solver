@@ -2,7 +2,7 @@
 #include <vector>
 #include <math.h>
 
-struct LATTICE
+struct CELL
 {
 	int rel_x;
 	int rel_y;
@@ -15,7 +15,7 @@ struct LATTICE
 
 	bool is_border = false;
 
-	LATTICE(int size, int x, int y, int posinitx, int posinity);
+	CELL(int size = 1, int x = 1, int y = 1, int posinitx = 1, int posinity = 1);
 };
 
 class FIELD
@@ -33,7 +33,7 @@ private:
 
 public:
 	
-	LATTICE** vector_field;
+	 CELL **vector_field;
 	
 	FIELD(int pos1x,int pos1y,int Resx,int Resy,int Size);
 	~FIELD();
@@ -45,4 +45,8 @@ public:
 	void Divergence_Vitesse_Cell(int x,int y);
 
 	void InFlow(float speed_ms);
+
+	float GetVelocityAtPoint(int x,int y, bool horizontal);
+
+	void ChangeVelocityAtPoint(int x, int y, bool horizontal, float n_v);	//to the left if x or under if y
 };

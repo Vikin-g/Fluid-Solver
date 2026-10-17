@@ -12,7 +12,8 @@ float pos[8] = {
 	0.0f,1.0f
 };
 
-LATTICE::LATTICE(int size, int x, int y, int posinitx, int posinity) 
+CELL::CELL(int size, int x, int y, int posinitx, int posinity)
+	:rel_x(x), rel_y(y), size(size)
 {
 	int i = 0;
 	while (i < 8)
@@ -25,29 +26,24 @@ LATTICE::LATTICE(int size, int x, int y, int posinitx, int posinity)
 		}
 		i += 1;
 	}
-	size = size;
-
-	rel_x = x;
-	rel_y = y;
 }
 
 FIELD::FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size)
-{
-	InPosx = pos1x; InPosy = pos1y; resx = Resx; resy = Resy; size = Size;
-}
+	:InPosx(pos1x),InPosy(pos1y), resx(Resx), resy(Resy), size(size)
+{ }
 
 void FIELD::CreateField() 
 {
-	vector_field = new LATTICE* [resx];
-	VelocityX = new float[(resx + 1]) * resy];
+	vector_field = new CELL* [resx];
+	VelocityX = new float[(resx + 1) * resy];
 	VelocityY = new float[resx * (resy + 1)];
 
 	for (int y = 0;y < resy;y++)
 	{
 		for (int x = 0; x < resx; x++)
 		{
-			vector_field[x] = new LATTICE[resy];								//intialize field
-			vector_field[x][y] = LATTICE(size, x, y, InPosx, InPosy);
+			vector_field[x] = new CELL [resy];								//intialize field
+			vector_field[x][y] = CELL(size, x, y, InPosx, InPosy);
 
 			VelocityY[x + y * resx] = 0.0f;										//initialize array of velocities in-between cells
 			VelocityY[x + resx * resy] = 0.0f;									// add extra top value 
@@ -69,9 +65,9 @@ void FIELD::EnableBorder()
 
 void FIELD::Divergence_Vitesse_Cell(int x, int y)		//divergence at cell index x and y
 {
-	LATTICE& cell = vector_field[x][y];
-	float gradient_x = (VelocityX[x+1][y] - VelocityX[x][y]) / cell.size;
-	float gradient_y = (VelocityY[x][y + 1] - VelocityY[x][y])/cell.size;
+	CELL& cell = vector_field[x][y];
+	float gradient_x = (GetVelocityAtPoint(x + 1, y, true) - GetVelocityAtPoint(x, y, true)) / cell.size;
+	float gradient_y = (GetVelocityAtPoint(x, y + 1, false) - GetVelocityAtPoint(x, y, false)) / cell.size;
 
 	cell.divergence = gradient_x + gradient_y;
 }
@@ -80,8 +76,24 @@ void FIELD::InFlow(float speed_ms)
 {
 	for (int i = 1; i < resy - 1;i++)
 	{
-		VelocityX[0][i] = speed_ms;
+		ChangeVelocityAtPoint(0,i,true,speed_ms);
 	}
+}
+
+float FIELD::GetVelocityAtPoint(int x, int y, bool horizontal)
+{
+	if (horizontal)
+		return VelocityX[x + y * resx];
+	else
+		return VelocityY[x + y * resx];
+}
+
+void FIELD::ChangeVelocityAtPoint(int x, int y, bool horizontal, float n_v)
+{
+	if (horizontal)
+		VelocityX[x + y * resx] = n_v;
+	else
+		VelocityY[x + y * resx] = n_v;
 }
 
 FIELD::~FIELD()
@@ -89,7 +101,7 @@ FIELD::~FIELD()
 	delete[] VelocityX;
 	delete[] VelocityY;
 
-	for (int i = 0; i < vector_field.size(); i++)
+	for (int i = 0; i < resy; i++)
 		delete[] vector_field[i];
 	delete[] vector_field;
 }

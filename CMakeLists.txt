@@ -20,8 +20,11 @@ find_package(OpenGL REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(GLEW REQUIRED)
 
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp")
+
 add_executable(euler_method 
 	"euler_method.cpp"
+	${SOURCES}
 )
 target_include_directories(euler_method PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 set(DEPS glfw GLEW::GLEW OpenGL::GL)

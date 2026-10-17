@@ -4,8 +4,6 @@
 #include <GLFW/glfw3.h>
 #include "src/objects.h"
 
-using namespace std;
-
 struct ECRAN
 {
 	GLFWwindow* window;
@@ -40,11 +38,11 @@ struct ECRAN
 	}
 };
 
-ECRAN ecran;
+//ECRAN ecran;
 
 
 
-int main(void)
+int main()
 {
 	FIELD Field(3, 4, 960, 540, 2);
 
@@ -53,6 +51,6 @@ int main(void)
 	Field.InFlow(0.25);
 
 	std::cout << Field.vector_field[0][0].is_border << std::endl;
-	std::cout << Field.vector_field[0][1].v_right << std::endl;
-
+	std::cout << Field.GetVelocityAtPoint(0, 1, true);
+	return 0;
 }
