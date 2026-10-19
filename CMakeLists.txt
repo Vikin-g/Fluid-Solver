@@ -9,7 +9,10 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
-project ("euler_method")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
+
+project ("euler_method2D")
 
 
 set(CMAKE_CXX_STANDARD 20)
@@ -22,12 +25,15 @@ find_package(GLEW REQUIRED)
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 
-add_executable(euler_method 
-	"euler_method.cpp"
+add_executable(euler_method2D 
 	${SOURCES}
 )
-target_include_directories(euler_method PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC RESOURCES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources/")
+#target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC RESOURCES_PATH="./resources/")
+
+target_include_directories(euler_method2D PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 set(DEPS glfw GLEW::GLEW OpenGL::GL)
-target_link_libraries(euler_method PRIVATE ${DEPS})
+target_link_libraries(euler_method2D PRIVATE ${DEPS})
 
 # TODO: Add tests and install targets if needed.

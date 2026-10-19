@@ -1,3 +1,0 @@
-C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/CMakeFiles/euler_method.dir
-C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/CMakeFiles/edit_cache.dir
-C:/Users/lucas/Coding/C++/Road to CFD/euler_method/out/build/x64-debug/CMakeFiles/rebuild_cache.dir

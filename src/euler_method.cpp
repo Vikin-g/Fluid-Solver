@@ -2,7 +2,7 @@
 //
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "src/objects.h"
+#include <objects.h>
 
 struct ECRAN
 {

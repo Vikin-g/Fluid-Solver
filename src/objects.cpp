@@ -1,4 +1,7 @@
-#include "objects.h"
+#include "../include/objects.h"
+
+#define HORIZONTAL true
+#define VERTICAL false
 
 unsigned int indices[] = {
 	 0,1,2,
@@ -66,8 +69,8 @@ void FIELD::EnableBorder()
 void FIELD::Divergence_Vitesse_Cell(int x, int y)		//divergence at cell index x and y
 {
 	CELL& cell = vector_field[x][y];
-	float gradient_x = (GetVelocityAtPoint(x + 1, y, true) - GetVelocityAtPoint(x, y, true)) / cell.size;
-	float gradient_y = (GetVelocityAtPoint(x, y + 1, false) - GetVelocityAtPoint(x, y, false)) / cell.size;
+	float gradient_x = (GetVelocityAtPoint(x + 1, y, HORIZONTAL) - GetVelocityAtPoint(x, y, HORIZONTAL)) / cell.size;
+	float gradient_y = (GetVelocityAtPoint(x, y + 1, VERTICAL) - GetVelocityAtPoint(x, y, VERTICAL)) / cell.size;
 
 	cell.divergence = gradient_x + gradient_y;
 }
@@ -76,7 +79,7 @@ void FIELD::InFlow(float speed_ms)
 {
 	for (int i = 1; i < resy - 1;i++)
 	{
-		ChangeVelocityAtPoint(0,i,true,speed_ms);
+		ChangeVelocityAtPoint(0,i,HORIZONTAL,speed_ms);
 	}
 }
 
