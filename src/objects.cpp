@@ -1,4 +1,4 @@
-#include "../include/objects.h"
+#include <objects.h>
 
 #define HORIZONTAL true
 #define VERTICAL false
@@ -68,6 +68,14 @@ void FIELD::EnableBorder()
 	}
 }
 
+void FIELD::UpdateVelocity(int x, int y)
+{
+	float* v_left = ExtractVelocity(x,y,HORIZONTAL);
+	float* v_right = ExtractVelocity(x+1,y,HORIZONTAL);
+	float* v_up = ExtractVelocity(x, y + 1, VERTICAL);
+	float* v_down = ExtractVelocity(x, y, VERTICAL);
+}
+
 void FIELD::Divergence_Vitesse_Cell(int x, int y)		//divergence at cell index x and y
 {
 	CELL& cell = vector_field[x][y];
@@ -81,7 +89,7 @@ void FIELD::InFlow(float speed_ms)
 {
 	for (int i = 1; i < resy - 1;i++)
 	{
-		ChangeVelocityAtPoint(0, i, HORIZONTAL, speed_ms);
+		*ExtractVelocity(0, i, HORIZONTAL) = speed_ms;
 	}
 	dt = floor(5 * size / speed_ms);						//time interval calculations forward Euler
 }
@@ -94,13 +102,16 @@ float FIELD::GetVelocityAtPoint(int x, int y, bool horizontal)
 		return VelocityY[x + y * resx];
 }
 
-void FIELD::ChangeVelocityAtPoint(int x, int y, bool horizontal, float n_v)
+float* FIELD::ExtractVelocity(int x, int y, bool horizontal)
 {
 	if (horizontal)
-		VelocityX[x + y * resx] = n_v;
+		return &VelocityX[x + y * resx];
 	else
-		VelocityY[x + y * resx] = n_v;
+		return &VelocityY[x + y * resx];
 }
+
+
+
 
 FIELD::~FIELD()
 {

@@ -1,6 +1,6 @@
-#include <iostream>
-#include <vector>
-#include <math.h>
+#pragma once
+
+#include <visualize.h>
 
 struct CELL
 {
@@ -34,20 +34,22 @@ private:
 
 	void CreateField(float ro);
 
-	void ChangeVelocityAtPoint(int x, int y, bool horizontal, float n_v);	//to the left if x or under if y
+	float* ExtractVelocity(int x, int y, bool horizontal);	//to the left if x or under if y
 
 public:
 	float dt;
-	 CELL **vector_field;
-	
-	FIELD(int pos1x,int pos1y,int Resx,int Resy,int Size, float rho);
+	CELL** vector_field;
+
+	FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size, float rho);
 	~FIELD();
 
 	void EnableBorder();
 
-	void Divergence_Vitesse_Cell(int x,int y);
+	void Divergence_Vitesse_Cell(int x, int y);
 
 	void InFlow(float speed_ms);
 
-	float GetVelocityAtPoint(int x,int y, bool horizontal);
+	void UpdateVelocity(int x, int y);
+
+	float GetVelocityAtPoint(int x, int y, bool horizontal);
 };
