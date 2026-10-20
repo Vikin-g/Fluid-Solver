@@ -15,8 +15,8 @@ float pos[8] = {
 	0.0f,1.0f
 };
 
-CELL::CELL(int size, int x, int y, int posinitx, int posinity)
-	:rel_x(x), rel_y(y), size(size)
+CELL::CELL(int size, int x, int y, int posinitx, int posinity, float ro)
+	:rel_x(x), rel_y(y), size(size), ro(ro)
 {
 	int i = 0;
 	while (i < 8)
@@ -31,11 +31,13 @@ CELL::CELL(int size, int x, int y, int posinitx, int posinity)
 	}
 }
 
-FIELD::FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size)
+FIELD::FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size, float rho)
 	:InPosx(pos1x),InPosy(pos1y), resx(Resx), resy(Resy), size(Size)
-{ }
+{ 
+	CreateField(rho);
+}
 
-void FIELD::CreateField() 
+void FIELD::CreateField(float ro) 
 {
 	vector_field = new CELL* [resx];
 	VelocityX = new float[(resx + 1) * resy];
@@ -46,7 +48,7 @@ void FIELD::CreateField()
 		for (int x = 0; x < resx; x++)
 		{
 			vector_field[x] = new CELL [resy];								//intialize field
-			vector_field[x][y] = CELL(size, x, y, InPosx, InPosy);
+			vector_field[x][y] = CELL(size, x, y, InPosx, InPosy, ro);
 
 			VelocityY[x + y * resx] = 0.0f;										//initialize array of velocities in-between cells
 			VelocityY[x + resx * resy] = 0.0f;									// add extra top value 
@@ -79,8 +81,9 @@ void FIELD::InFlow(float speed_ms)
 {
 	for (int i = 1; i < resy - 1;i++)
 	{
-		ChangeVelocityAtPoint(0,i,HORIZONTAL,speed_ms);
+		ChangeVelocityAtPoint(0, i, HORIZONTAL, speed_ms);
 	}
+	dt = floor(5 * size / speed_ms);						//time interval calculations forward Euler
 }
 
 float FIELD::GetVelocityAtPoint(int x, int y, bool horizontal)
