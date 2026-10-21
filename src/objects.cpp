@@ -73,10 +73,10 @@ void FIELD::EnableBorder()
 
 void FIELD::VirtualLagrangian(int x, int y)
 {
-	float v_left = GetVelocityAtPoint(x,y,DIRECTION::HORIZONTAL);
-	float v_right = GetVelocityAtPoint(x+1,y,DIRECTION::HORIZONTAL);
-	float v_up = GetVelocityAtPoint(x, y + 1, DIRECTION::VERTICAL);
-	float v_down = GetVelocityAtPoint(x, y, DIRECTION::VERTICAL);
+	float v_left =	GetVelocityAtPoint(x + 0, y + 0, DIRECTION::HORIZONTAL);
+	float v_right = GetVelocityAtPoint(x + 1, y + 0, DIRECTION::HORIZONTAL);
+	float v_up =	GetVelocityAtPoint(x + 0, y + 1, DIRECTION::VERTICAL);
+	float v_down =	GetVelocityAtPoint(x + 1, y + 1, DIRECTION::VERTICAL);
 
 	int index = Index(x, y);
 
