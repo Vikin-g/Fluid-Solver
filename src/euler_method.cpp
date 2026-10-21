@@ -9,6 +9,6 @@ int main()
 	Field.InFlow(0.25);
 
 	std::cout << Field.vector_field[0][0].is_border << std::endl;
-	std::cout << Field.GetVelocityAtPoint(0, 1, true);
+	Field.ViewVelocity(0, 1, DIRECTION::HORIZONTAL);
 	return 0;
 }

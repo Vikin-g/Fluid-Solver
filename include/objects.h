@@ -2,6 +2,11 @@
 
 #include <visualize.h>
 
+enum class DIRECTION {
+	HORIZONTAL,
+	VERTICAL
+};
+
 struct CELL
 {
 	int rel_x;
@@ -19,6 +24,18 @@ struct CELL
 	CELL(int size = 1, int x = 1, int y = 1, int posinitx = 1, int posinity = 1, float rho = 1);
 };
 
+struct VEC
+{
+	int pos;
+
+	float prev_x;
+	float prev_y;
+
+	float vel;
+
+	VEC(int Pos = 0, float Velocity = 0.0f);
+};
+
 class FIELD
 {
 private:
@@ -29,13 +46,17 @@ private:
 	int InPosx;
 	int InPosy;
 
+	VEC* TVelocityX;
+	VEC* TVelocityY;
+
 	float* VelocityX;
 	float* VelocityY;
 
 	void CreateField(float ro);
 
-	float* ExtractVelocity(int x, int y, bool horizontal);	//to the left if x or under if y
+	float& GetVelocityAtPoint(int x, int y, DIRECTION direction);	//to the left if x or under if y
 
+	int Index(int x, int y);
 public:
 	float dt;
 	CELL** vector_field;
@@ -49,7 +70,7 @@ public:
 
 	void InFlow(float speed_ms);
 
-	void UpdateVelocity(int x, int y);
+	void VirtualLagrangian(int x, int y);					//find value of particle before current position
 
-	float GetVelocityAtPoint(int x, int y, bool horizontal);
+	void ViewVelocity(int x, int y, DIRECTION direction);
 };

@@ -1,8 +1,5 @@
 #include <objects.h>
 
-#define HORIZONTAL true
-#define VERTICAL false
-
 unsigned int indices[] = {
 	 0,1,2,
 	 2,3,0
@@ -30,6 +27,12 @@ CELL::CELL(int size, int x, int y, int posinitx, int posinity, float ro)
 		i += 1;
 	}
 }
+
+VEC::VEC(int Pos, float Velocity)
+	:pos(Pos), vel(Velocity)
+{ }
+
+//----------------------------- FIELD----------------------------------------------
 
 FIELD::FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size, float rho)
 	:InPosx(pos1x),InPosy(pos1y), resx(Resx), resy(Resy), size(Size)
@@ -68,19 +71,33 @@ void FIELD::EnableBorder()
 	}
 }
 
-void FIELD::UpdateVelocity(int x, int y)
+void FIELD::VirtualLagrangian(int x, int y)
 {
-	float* v_left = ExtractVelocity(x,y,HORIZONTAL);
-	float* v_right = ExtractVelocity(x+1,y,HORIZONTAL);
-	float* v_up = ExtractVelocity(x, y + 1, VERTICAL);
-	float* v_down = ExtractVelocity(x, y, VERTICAL);
+	float v_left = GetVelocityAtPoint(x,y,DIRECTION::HORIZONTAL);
+	float v_right = GetVelocityAtPoint(x+1,y,DIRECTION::HORIZONTAL);
+	float v_up = GetVelocityAtPoint(x, y + 1, DIRECTION::VERTICAL);
+	float v_down = GetVelocityAtPoint(x, y, DIRECTION::VERTICAL);
+
+	int index = Index(x, y);
+
+	TVelocityX = new VEC[(resx + 1) * resy];
+	TVelocityY = new VEC[resx * (resy + 1)];
+
+	TVelocityX[index].pos = x;
+	TVelocityX[index].vel = v_left;	
+	TVelocityX[index].prev_x = x - v_left*dt;
+	
+	TVelocityY[index].pos = y;
+	TVelocityY[index].vel = v_down;
+	TVelocityY[index].prev_y = y - v_down * dt;
+
 }
 
 void FIELD::Divergence_Vitesse_Cell(int x, int y)		//divergence at cell index x and y
 {
 	CELL& cell = vector_field[x][y];
-	float gradient_x = (GetVelocityAtPoint(x + 1, y, HORIZONTAL) - GetVelocityAtPoint(x, y, HORIZONTAL)) / cell.size;
-	float gradient_y = (GetVelocityAtPoint(x, y + 1, VERTICAL) - GetVelocityAtPoint(x, y, VERTICAL)) / cell.size;
+	float gradient_x = (GetVelocityAtPoint(x + 1, y, DIRECTION::HORIZONTAL) - GetVelocityAtPoint(x, y, DIRECTION::HORIZONTAL)) / cell.size;
+	float gradient_y = (GetVelocityAtPoint(x, y + 1, DIRECTION::VERTICAL) - GetVelocityAtPoint(x, y, DIRECTION::VERTICAL)) / cell.size;
 
 	cell.divergence = gradient_x + gradient_y;
 }
@@ -89,34 +106,38 @@ void FIELD::InFlow(float speed_ms)
 {
 	for (int i = 1; i < resy - 1;i++)
 	{
-		*ExtractVelocity(0, i, HORIZONTAL) = speed_ms;
+		GetVelocityAtPoint(0, i, DIRECTION::HORIZONTAL) = speed_ms;
 	}
 	dt = floor(5 * size / speed_ms);						//time interval calculations forward Euler
 }
 
-float FIELD::GetVelocityAtPoint(int x, int y, bool horizontal)
+float& FIELD::GetVelocityAtPoint(int x, int y, DIRECTION direction)
 {
-	if (horizontal)
-		return VelocityX[x + y * resx];
+	int index = Index(x,y);
+
+	if (direction == DIRECTION::HORIZONTAL)
+		return VelocityX[index];
 	else
-		return VelocityY[x + y * resx];
+		return VelocityY[index];
 }
 
-float* FIELD::ExtractVelocity(int x, int y, bool horizontal)
+void FIELD::ViewVelocity(int x, int y, DIRECTION direction)
 {
-	if (horizontal)
-		return &VelocityX[x + y * resx];
-	else
-		return &VelocityY[x + y * resx];
+	std::cout << GetVelocityAtPoint(x, y, direction) << std::endl;
 }
 
-
-
+int FIELD::Index(int x, int y)
+{
+	return x + y * resx;
+}
 
 FIELD::~FIELD()
 {
 	delete[] VelocityX;
 	delete[] VelocityY;
+
+	delete[] TVelocityX;
+	delete[] TVelocityY;
 
 	for (int i = 0; i < resy; i++)
 		delete[] vector_field[i];
