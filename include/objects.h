@@ -9,19 +9,11 @@ enum class DIRECTION {
 
 struct CELL
 {
-	int rel_x;
-	int rel_y;
-
-	int size;
-
-	float ro;
 	float divergence;
-	
-	float positions[8];
 
 	bool is_border = false;
 
-	CELL(int size = 1, int x = 1, int y = 1, int posinitx = 1, int posinity = 1, float rho = 1);
+	CELL();
 };
 
 struct VEC
@@ -51,6 +43,8 @@ private:
 
 	float* VelocityX;
 	float* VelocityY;
+
+	float* PressureMap;
 
 	void CreateField(float ro);
 
