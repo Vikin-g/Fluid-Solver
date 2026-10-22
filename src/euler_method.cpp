@@ -4,7 +4,7 @@
 
 int main()
 {
-	FIELD Field(3, 4, 960, 540, 2, 1);
+	FIELD Field(3, 4, 960, 540, 2, 1, 1e-3);
 	Field.EnableBorder();
 	Field.InFlow(0.25);
 

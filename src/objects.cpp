@@ -85,9 +85,18 @@ void FIELD::SolvePressureCell(int x, int y)
 
 void FIELD::UpdateAll()
 {
-	
+	Gauss_Seidel();
+
 }
 
+/*void FIELD::UpdateVelocities()
+{
+	for (int x = 0; x < resx;x++)
+	{
+
+	}
+}
+*/
 void FIELD::Divergence_Vitesse_Cell(int x, int y)		//divergence at cell index x and y
 {
 	CELL& cell = vector_field[x][y];
@@ -121,7 +130,7 @@ void FIELD::Gauss_Seidel()
 
 	int i = 0;
 
-	while (r_rel > u_p)  // 
+	while (r_rel > u_p)
 	{
 
 		if (i == 50)
