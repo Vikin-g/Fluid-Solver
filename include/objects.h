@@ -7,6 +7,12 @@ enum class DIRECTION {
 	VERTICAL
 };
 
+enum class Material {
+	FREE_WALL,
+	WATER,
+	OBJECT
+};
+
 struct CELL
 {
 	int rel_x;
@@ -14,23 +20,19 @@ struct CELL
 	
 	float divergence;
 
-	bool is_border = false;
+	Material material;
 
 	float pressure;
 
 	CELL(int rel_x = 0, int rel_y = 0);
 };
 
-struct VEC
+template<typename T>
+void SwapBuffers(T*& front, T*& back)
 {
-	int pos;
-
-	float prev_x;
-	float prev_y;
-
-	float vel;
-
-	VEC(int Pos = 0, float Velocity = 0.0f);
+	T* temp = front;
+	front = back;
+	back = temp;
 };
 
 class FIELD
@@ -47,18 +49,19 @@ private:
 
 	float u_p;					// uncertainty for pressure
 
-	VEC* TVelocityX;
-	VEC* TVelocityY;
+	float in_v;
+
+	float* TVelocityX;
+	float* TVelocityY;
 
 	float* VelocityX;
 	float* VelocityY;
 
-	float* NewV_x;
-	float* NewV_y;
-
 	void CreateField();
 
 	float& GetVelocityAtPoint(int x, int y, DIRECTION direction);	//to the left if x or under if y
+
+	float& GetPressureAtPoint(int x, int y);
 
 	int Index(int x, int y);
 
@@ -66,11 +69,11 @@ private:
 
 	void UpdateVelocities();
 
-	void UpdateAll();
+	void Solve();
 
 	void Gauss_Seidel();
 
-	
+	void VirtualLagrangian();					//find value of particle before current position
 public:
 	float dt;
 	CELL** vector_field;
@@ -88,7 +91,9 @@ public:
 	
 	void InFlow(float speed_ms);
 
-	void VirtualLagrangian(int x, int y);					//find value of particle before current position
+	Material IsBorder(int x, int y);
+
+	
 
 	void ViewVelocity(int x, int y, DIRECTION direction);
 };

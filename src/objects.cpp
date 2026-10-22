@@ -28,9 +28,6 @@ CELL::CELL(int rel_x, int rel_y)
 	}
 }
 */
-VEC::VEC(int Pos, float Velocity)
-	:pos(Pos), vel(Velocity)
-{ }
 
 //----------------------------- FIELD----------------------------------------------
 
@@ -47,8 +44,8 @@ void FIELD::CreateField()
 	VelocityX = new float[(resx + 1) * resy];
 	VelocityY = new float[resx * (resy + 1)];
 
-	TVelocityX = new VEC[(resx + 1) * resy];
-	TVelocityY = new VEC[resx * (resy + 1)];
+	TVelocityX = new float[(resx + 1) * resy];
+	TVelocityY = new float[resx * (resy + 1)];
 
 	for (int y = 0;y < resy;y++)
 	{
@@ -80,23 +77,32 @@ void FIELD::SolvePressureCell(int x, int y)
 
 	float DeltaVelocity = v_up - v_down + v_right - v_left;
 	float PressureSum = p_up + p_down + p_left + p_right;
-	vector_field[x][y].pressure = ((size*rho/dt)*DeltaVelocity + PressureSum)/4;
+	GetPressureAtPoint(x,y) = ((size * rho / dt) * DeltaVelocity + PressureSum) / 4;
 }
 
-void FIELD::UpdateAll()
+void FIELD::Solve()
 {
 	Gauss_Seidel();
-
+	UpdateVelocities();
+	VirtualLagrangian();
 }
 
-/*void FIELD::UpdateVelocities()
+void FIELD::UpdateVelocities()
 {
-	for (int x = 0; x < resx;x++)
+	for (int x = 1; x < resx;x++)
 	{
-
+		for (int y = 1; y < resy;y++)
+		{	
+			if (vector_field[x][y].material == Material::WATER)
+			{
+				VelocityX[Index(x, y)] = VelocityX[Index(x, y)] - dt * (GetPressureAtPoint(x + 1, y) - GetPressureAtPoint(x, y)) / size;
+				VelocityY[Index(x, y)] = VelocityY[Index(x, y)] - dt * (GetPressureAtPoint(x, y + 1) - GetPressureAtPoint(x, y)) / size;
+			}
+		}
 	}
+	
 }
-*/
+
 void FIELD::Divergence_Vitesse_Cell(int x, int y)		//divergence at cell index x and y
 {
 	CELL& cell = vector_field[x][y];
@@ -106,22 +112,43 @@ void FIELD::Divergence_Vitesse_Cell(int x, int y)		//divergence at cell index x 
 	cell.divergence = gradient_x + gradient_y;
 }
 
-void FIELD::VirtualLagrangian(int x, int y)
+void FIELD::VirtualLagrangian()
 {
-	float v_left = GetVelocityAtPoint(x + 0, y + 0, DIRECTION::HORIZONTAL);
-	float v_right = GetVelocityAtPoint(x + 1, y + 0, DIRECTION::HORIZONTAL);
-	float v_down = GetVelocityAtPoint(x + 0, y + 1, DIRECTION::VERTICAL);
-	float v_up = GetVelocityAtPoint(x + 1, y + 1, DIRECTION::VERTICAL);
+	for (int x = 1; x < resx;x++)
+	{
+		for (int y = 1; y < resy;y++)
+		{
+			float v_left = GetVelocityAtPoint(x + 0, y + 0, DIRECTION::HORIZONTAL);
+			float v_right = GetVelocityAtPoint(x + 1, y + 0, DIRECTION::HORIZONTAL);
+			float v_down = GetVelocityAtPoint(x + 0, y + 1, DIRECTION::VERTICAL);
+			float v_up = GetVelocityAtPoint(x + 1, y + 1, DIRECTION::VERTICAL);
 
-	int index = Index(x, y);
+			int index = Index(x, y);
 
-	TVelocityX[index].pos = x;
-	TVelocityX[index].vel = v_left;
-	TVelocityX[index].prev_x = x - v_left * dt;
+			if (IsBorder(x, y) == Material::WATER)
+			{	
+				float back_x = x - (v_left * dt);
+				float back_y = y - (v_down * dt);
 
-	TVelocityY[index].pos = y;
-	TVelocityY[index].vel = v_down;
-	TVelocityY[index].prev_y = y - v_down * dt;
+				if (back_x < 0)
+				{
+					TVelocityX[index] = in_v;
+					TVelocityY[index] = 0.0f;
+				}
+				else
+				{
+					TVelocityX[index] = v_left;
+					TVelocityY[index] = v_down;
+				}
+			}
+			else if (IsBorder(x, y) == Material::OBJECT)
+			{
+
+			}
+		}
+	}
+	SwapBuffers(VelocityX, TVelocityX);
+	SwapBuffers(VelocityY, TVelocityY);
 }
 
 void FIELD::Gauss_Seidel()
@@ -169,13 +196,13 @@ void FIELD::Gauss_Seidel()
 
 float FIELD::CalcR_p(int x, int y)
 {
-	float p_left = vector_field[x - 1][y + 0].pressure;
-	float p_right = vector_field[x + 1][y + 0].pressure;
-	float p_down = vector_field[x + 0][y - 1].pressure;
-	float p_up = vector_field[x + 0][y + 1].pressure;
+	float p_left = GetPressureAtPoint(x - 1,y + 0);
+	float p_right = GetPressureAtPoint(x + 1,y + 0);
+	float p_down = GetPressureAtPoint(x + 0,y - 1);
+	float p_up = GetPressureAtPoint(x + 0,y + 1);
 
 	float this_divergence = vector_field[x][y].divergence;
-	float this_p = vector_field[x][y].pressure;
+	float this_p = GetPressureAtPoint(x,y);
 
 	float SumPressures = p_left + p_right + p_down + p_up - 4 * this_p;
 
@@ -189,24 +216,6 @@ float FIELD::CalcS_p(int x, int y)
 	return rho * divergence / dt;
 }
 
-void FIELD::InFlow(float speed_ms)
-{
-	for (int i = 1; i < resy - 1;i++)
-	{
-		GetVelocityAtPoint(0, i, DIRECTION::HORIZONTAL) = speed_ms;
-	}
-	dt = floor(5 * size / speed_ms);						//time interval calculations forward Euler
-}
-
-void FIELD::EnableBorder() 
-{
-	for (int i = 0; i<resx;i++) 
-	{
-		vector_field[i][0].is_border = true;
-		vector_field[i][resy - 2].is_border = true;
-	}
-}
-
 float& FIELD::GetVelocityAtPoint(int x, int y, DIRECTION direction)
 {
 	int index = Index(x,y);
@@ -217,7 +226,35 @@ float& FIELD::GetVelocityAtPoint(int x, int y, DIRECTION direction)
 		return VelocityY[index];
 }
 
+float& FIELD::GetPressureAtPoint(int x, int y)
+{
+	return vector_field[x][y].pressure;
+}
 
+Material FIELD::IsBorder(int x, int y)
+{
+	return vector_field[x][y].material;
+}
+void FIELD::InFlow(float speed_ms)
+{
+	for (int i = 1; i < resy - 1;i++)
+	{
+		GetVelocityAtPoint(0, i, DIRECTION::HORIZONTAL) = speed_ms;
+	}
+
+	in_v = speed_ms;
+
+	dt = floor(5 * size / speed_ms);						//time interval calculations forward Euler
+}
+
+void FIELD::EnableBorder() 
+{
+	for (int i = 0; i<resx;i++) 
+	{
+		vector_field[i][0].material = Material::FREE_WALL;
+		vector_field[i][resy - 2].material = Material::FREE_WALL;
+	}
+}
 
 void FIELD::ViewVelocity(int x, int y, DIRECTION direction)
 {
@@ -236,9 +273,6 @@ FIELD::~FIELD()
 
 	delete[] TVelocityX;
 	delete[] TVelocityY;
-
-	delete[] NewV_x;
-	delete[] NewV_y;
 
 	for (int i = 0; i < resy; i++)
 		delete[] vector_field[i];
