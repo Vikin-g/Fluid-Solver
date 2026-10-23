@@ -88,10 +88,11 @@ float FIELD::IntegrateFriction()			//Integrate friction in x-component
 				float sigma_x = -GetPressureAtPoint(x + 1, y) + 2 * mu * gradient_x;
 				float sigma_y = mu * vector_field[x + 1][y].divergence;
 
-				Fx += (sigma_x * n + sigma_y * n) * size;
+				Fx += 2 * (sigma_x + sigma_y) * size;
 			}
 		}
 	}
+	return Fx;
 }
 
 void FIELD::SolvePressureCell(int x, int y)
@@ -308,12 +309,30 @@ void FIELD::InFlow(float speed_ms)
 	dt = floor(5 * size / speed_ms);						//time interval calculations forward Euler
 }
 
+void FIELD::FindBoard(ObjectMask object, int posx, int posy)
+{
+	for (int x = 0; x < object.size(); x++)
+	{
+		for (int y = 0; y < object[x].size(); y++)
+		{
+			if (object[x][y])
+			{
+				vector_field[x + posx][y + posy].material = Material::OBJECT;
+			}
+		}
+	}
+}
+
 void FIELD::EnableBorder() 
 {
 	for (int i = 0; i<resx;i++) 
 	{
 		vector_field[i][0].material = Material::FREE_WALL;
-		vector_field[i][resy - 2].material = Material::FREE_WALL;
+		vector_field[i][resy - 1].material = Material::FREE_WALL;
+	}
+	for (int j; j < resy; j++)
+	{
+		vector_field[resx - 1][j].material = Material::FREE_WALL;
 	}
 }
 
@@ -338,4 +357,35 @@ FIELD::~FIELD()
 	for (int i = 0; i < resy; i++)
 		delete[] vector_field[i];
 	delete[] vector_field;
+}
+//----------------------------------3D Field (approximately)------------------------------
+
+FIELD3D::FIELD3D(int pos1x, int pos1y, int Resx, int Resy, int Size, std::string Path, float v_in)
+	:pos1x(pos1x), pos1y(pos1y), resx(Resx), resy(Resy), size(Size), path(Path), v_in(v_in)
+{}
+
+float FIELD3D::SolveAll()
+{
+	float total_force;
+
+	rapidobj::Result result = rapidobj::ParseFile(path);
+
+	
+
+	for ( int i = 0; i < 30; i++)
+	{	
+		ObjectMask object = FindCrossSection(result, i, size);
+		FIELD field(pos1x, pos1y, resx, resy, size, 1, 1e-3);
+		field.EnableBorder();
+		field.FindBoard(object, 50, 50);
+
+		field.InFlow(0.2);
+
+		field.Solve();
+
+		total_force += field.IntegrateFriction();
+
+
+	}
+	return total_force;
 }

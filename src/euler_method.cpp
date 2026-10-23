@@ -2,13 +2,16 @@
 //
 #include <objects.h>
 
+enum class PLANCHE
+{
+	BELLY,
+	CONCAVE,
+	DOUBLE_CONCAVE,
+};
+
 int main()
 {
-	FIELD Field(3, 4, 960, 540, 2, 1, 1e-3);
-	Field.EnableBorder();
-	Field.InFlow(0.25);
-
-	std::cout << Field.vector_field[0][0].is_border << std::endl;
-	Field.ViewVelocity(0, 1, DIRECTION::HORIZONTAL);
+	FIELD3D field(1, 1, 940, 490, 0.1, "../resources/belly.obj",1);
+	field.SolveAll();
 	return 0;
 }

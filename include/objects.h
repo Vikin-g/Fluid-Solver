@@ -1,6 +1,8 @@
 #pragma once
 
 #include <visualize.h>
+#include <board.h>
+#include <string>
 
 enum class DIRECTION {
 	HORIZONTAL,
@@ -48,6 +50,7 @@ void SwapBuffers(T*& front, T*& back)
 class FIELD
 {
 private:
+
 	int resx;
 	int resy;
 	int size;
@@ -61,7 +64,7 @@ private:
 
 	float in_v;
 
-	float mu;
+	float mu = 1e-3;
 
 	float* TVelocityX;
 	float* TVelocityY;
@@ -81,13 +84,15 @@ private:
 
 	void UpdateVelocities();
 
-	void Solve();
+
 
 	void Gauss_Seidel();
 
 	void VirtualLagrangian();					//find value of particle before current position
 
 	Pressure PrepPressure(int x, int y);
+
+	void Solve3D();
 
 	int time;
 	float dt;
@@ -98,6 +103,8 @@ public:
 
 	FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size, float rho, float U_p);
 	~FIELD();
+
+	void Solve();
 
 	void EnableBorder();
 
@@ -114,4 +121,29 @@ public:
 	float IntegrateFriction();
 
 	void ViewVelocity(int x, int y, DIRECTION direction);
+
+	void FindBoard(ObjectMask, int, int);
+};
+
+//------------------------------------FIELD 3D----------------------------------
+
+class FIELD3D
+{
+public:
+
+	int intersec;
+	int pos1x;
+	int pos1y;
+	int resx;
+	int resy;
+	int size;
+
+	float v_in;
+
+	std::string path;
+
+	FIELD3D(int pos1x, int pos1y, int Resx, int Resy, int Size, std::string Path, float v_in);
+	~FIELD3D();
+
+	float SolveAll();
 };
