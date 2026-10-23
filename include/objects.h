@@ -13,6 +13,16 @@ enum class Material {
 	OBJECT
 };
 
+struct Pressure 
+{
+	int flow_up = 0;
+	int flow_left = 0;
+	int flow_down = 0;
+	int flow_right = 0;
+
+	int fluidEdgeCount = 0;
+};
+
 struct CELL
 {
 	int rel_x;
@@ -74,6 +84,8 @@ private:
 	void Gauss_Seidel();
 
 	void VirtualLagrangian();					//find value of particle before current position
+
+	Pressure PrepPressure(int x, int y);
 public:
 	float dt;
 	CELL** vector_field;
