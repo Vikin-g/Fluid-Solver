@@ -61,6 +61,8 @@ private:
 
 	float in_v;
 
+	float mu;
+
 	float* TVelocityX;
 	float* TVelocityY;
 
@@ -86,8 +88,12 @@ private:
 	void VirtualLagrangian();					//find value of particle before current position
 
 	Pressure PrepPressure(int x, int y);
-public:
+
+	int time;
 	float dt;
+
+public:
+
 	CELL** vector_field;
 
 	FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size, float rho, float U_p);
@@ -105,7 +111,7 @@ public:
 
 	Material IsBorder(int x, int y);
 
-	
+	float IntegrateFriction();
 
 	void ViewVelocity(int x, int y, DIRECTION direction);
 };

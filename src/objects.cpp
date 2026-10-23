@@ -1,5 +1,6 @@
 #include <objects.h>
 
+
 unsigned int indices[] = {
 	 0,1,2,
 	 2,3,0
@@ -70,6 +71,26 @@ void FIELD::Solve()
 		Gauss_Seidel();
 		UpdateVelocities();
 		VirtualLagrangian();
+	}
+}
+
+float FIELD::IntegrateFriction()			//Integrate friction in x-component
+{
+	float Fx;
+	for (int x = 0;x < resx; x++)
+	{
+		for (int y = floor(resy/2); y < resy; y++)
+		{
+			Pressure p = PrepPressure(x, y);
+			if (IsBorder(x, y) == Material::OBJECT && p.flow_right == 1)
+			{
+				float gradient_x = (GetVelocityAtPoint(x + 1, y, DIRECTION::HORIZONTAL) - GetVelocityAtPoint(x, y, DIRECTION::HORIZONTAL)) / size;
+				float sigma_x = -GetPressureAtPoint(x + 1, y) + 2 * mu * gradient_x;
+				float sigma_y = mu * vector_field[x + 1][y].divergence;
+
+				Fx += (sigma_x * n + sigma_y * n) * size;
+			}
+		}
 	}
 }
 
