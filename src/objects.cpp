@@ -51,6 +51,8 @@ void FIELD::CreateField()
 		}
 	}
 
+
+
 	VelocityX = new float[(resx + 1) * resy]();									
 	VelocityY = new float[resx * (resy + 1)]();
 	
@@ -146,6 +148,11 @@ float FIELD::IntegrateFriction()			//Integrate friction in x-component
 				float u = 0.5f * (VelocityX[IndexU(x, y + 1)] + VelocityX[IndexU(x + 1, y + 1)]);
 				Fx += 2.0f * mu * u;
 			}
+			if (p.flow_down == 1)
+			{
+				float u = 0.5f * (VelocityX[IndexU(x, y - 1)] + VelocityX[IndexU(x + 1, y - 1)]);
+				Fx += 2.0f * mu * u;
+			}
 		}
 	}
 	return Fx;
@@ -165,7 +172,12 @@ void FIELD::SolvePressureCell(int x, int y)
 		float VelSum = vector_field[x][y].divergence*size;
 		float PressureSum = p_up + p_down + p_left + p_right;
 		if (p.fluidEdgeCount == 0) { GetPressureAtPoint(x, y) = 0; }
-		else{GetPressureAtPoint(x, y) = (PressureSum - (size * rho / dt) * VelSum) / p.fluidEdgeCount;}
+		else
+		{
+			const float p_gs = (PressureSum - (size * rho / dt) * VelSum) / p.fluidEdgeCount;
+			float& pc = GetPressureAtPoint(x, y);
+			pc += 1.8f * (p_gs - pc);          // omega = 1.8; stay below 2
+		}
 	}
 	else
 		GetPressureAtPoint(x, y) = 0;
@@ -221,6 +233,9 @@ float FIELD::SampleY(float x, float y) { return BilinearPos(VelocityY, resx, res
 
 void FIELD::VirtualLagrangian()
 {
+	std::copy(VelocityX, VelocityX + (resx + 1) * resy, TVelocityX);
+	std::copy(VelocityY, VelocityY + resx * (resy + 1), TVelocityY);
+
 	float K = dt / size;
 	for (int x = 1; x < resx;x++)
 	{
@@ -254,7 +269,7 @@ void FIELD::VirtualLagrangian()
 				float px = x + 0.5f, py = y;
 
 				float u = SampleX(px, py);
-				float v_down = GetVelocityAtPoint(x + 0, y + 1, DIRECTION::VERTICAL);
+				float v_down = GetVelocityAtPoint(x + 0, y  + 0, DIRECTION::VERTICAL);
 
 				float back_x = px - K * u;
 				float back_y = py - K * v_down;
@@ -273,6 +288,9 @@ void FIELD::VirtualLagrangian()
 
 void FIELD::Diffuse()
 {
+	std::copy(VelocityX, VelocityX + (resx + 1) * resy, TVelocityX);
+	std::copy(VelocityY, VelocityY + resx * (resy + 1), TVelocityY);
+
 	const float nu = mu / rho;
 	const float a = nu * dt / (size * size);
 
@@ -357,9 +375,9 @@ void FIELD::Gauss_Seidel()
 
 	for (int i = 0; i < 50; i++)
 	{
-		for (int x = 0; x < resx - 1; x++)		// if x or y in boundary: solve pressure neighbour cells don't exist
+		for (int x = 1; x < resx - 1; x++)		// if x or y in boundary: solve pressure neighbour cells don't exist
 		{
-			for (int y = 0; y < resy - 1; y++)
+			for (int y = 1; y < resy - 1; y++)
 			{
 				SolvePressureCell(x, y);
 			}
@@ -490,7 +508,7 @@ void FIELD::FindBoard(ObjectMask object, int posx, int posy)
 				continue;
 
 			const int fx = x + posx, fy = y + posy;
-			if (fx < 0 || fx > resx || fy < 0 || fy > resy)
+			if (fx <= 0 || fx >= resx || fy <= 0 || fy >= resy)
 				continue;											// write on outside field
 
 			vector_field[fx][fy].material = Material::OBJECT;
@@ -590,10 +608,13 @@ float FIELD3D::SolveAll()
 		<< " m (expected about 0.039)\n";
 	//PrintMask(mid);
 	
-
+	std::cerr << "v_in=" << v_in << " size=" << size << " to_m=" << to_m
+		<< " resx=" << resx << " resy=" << resy
+		<< " posx=" << posx << " posy=" << posy << "\n";
 
 
 	for (int k = 0; k < slices; k++) {
+
 		float z = SliceZ(b, to_m, dz, k);
 		ObjectMask m = FindCrossSection(result, b, z, obj.nx, obj.ny, size / to_m);
 		if (!AnyTrue(m) || MaxThickness(m) < 3) continue;
@@ -603,8 +624,9 @@ float FIELD3D::SolveAll()
 		field.InFlow(v_in);
 		field.Solve();
 		float t_force = field.IntegrateFriction() * dz;  // N/m * m = N
+		std::cerr << "slice " << k << "/" << slices << "  F=" << t_force << std::endl;
 		//std::cout << "Slice " << k << ": " << t_force << std::endl;
-			total_force += t_force;
+		total_force += t_force;
 	}
 	return total_force;
 }

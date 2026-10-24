@@ -32,7 +32,7 @@ struct CELL
 	
 	float divergence = 0;
 
-	Material material;
+	Material material = Material::WATER;
 
 	float pressure = 0;
 	

@@ -24,7 +24,15 @@ int main()
 	*/
 
 	FIELD3D field(1, 1, 940, 490, 0.002f, path,1);
-	std::cout << field.SolveAll() << std::endl;
+	try
+	{
+		float F = field.SolveAll();       // use your own variable names
+		std::cout << F << std::endl;
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "exception: " << e.what() << std::endl;
+	}
 
 	return 0;
 }
