@@ -15,7 +15,8 @@ float pos[8] = {
 
 CELL::CELL(int rel_x, int rel_y)
 	:rel_x(rel_x), rel_y(rel_y)
-{}
+{
+}
 /*	int i = 0;
 	while (i < 8)
 	{
@@ -32,7 +33,7 @@ CELL::CELL(int rel_x, int rel_y)
 
 //----------------------------- FIELD----------------------------------------------
 
-FIELD::FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size, float rho, float U_p)
+FIELD::FIELD(int pos1x, int pos1y, int Resx, int Resy, float Size, float rho, float U_p)
 	:InPosx(pos1x),InPosy(pos1y), resx(Resx), resy(Resy), size(Size), rho(rho), u_p(U_p)
 { 
 	CreateField();
@@ -40,28 +41,21 @@ FIELD::FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size, float rho, floa
 
 void FIELD::CreateField() 
 {
-	vector_field = new CELL* [resx];
+	vector_field = new CELL * [resx];
+	for (int i = 0; i < resx; i++)
+	{
+		vector_field[i] = new CELL[resy];
+		for (int j = 0; j < resy; j++)
+		{
+			vector_field[i][j] = CELL(i, j);
+		}
+	}
 
-	VelocityX = new float[(resx + 1) * resy];
+	VelocityY = new float[(resx + 1) * resy]();									
 	VelocityY = new float[resx * (resy + 1)];
-
+	
 	TVelocityX = new float[(resx + 1) * resy];
 	TVelocityY = new float[resx * (resy + 1)];
-
-	for (int y = 0;y < resy;y++)
-	{
-		for (int x = 0; x < resx; x++)
-		{
-			vector_field[x] = new CELL [resy];								//intialize field
-			vector_field[x][y] = CELL(x, y);
-
-			VelocityY[x + y * resx] = 0.0f;										//initialize array of velocities in-between cells
-			VelocityY[x + resx * resy] = 0.0f;									// add extra top value 
-
-			VelocityX[x + y * (resx+1)] = 0.0f;
-		}
-		VelocityX[resx + y * resx] = 0.0f;										// add extra right value
-	}
 }
 
 void FIELD::Solve()
@@ -76,10 +70,10 @@ void FIELD::Solve()
 
 float FIELD::IntegrateFriction()			//Integrate friction in x-component
 {
-	float Fx;
-	for (int x = 0;x < resx; x++)
+	float Fx = 0;
+	for (int x = 1;x < resx-1; x++)
 	{
-		for (int y = floor(resy/2); y < resy; y++)
+		for (int y = 1; y < resy-1; y++)
 		{
 			Pressure p = PrepPressure(x, y);
 			if (IsBorder(x, y) == Material::OBJECT && p.flow_right == 1)
@@ -99,19 +93,15 @@ void FIELD::SolvePressureCell(int x, int y)
 {
 	if (vector_field[x][y].material == Material::WATER)
 	{
+		Divergence_Vitesse_Cell(x, y);
 		Pressure p = PrepPressure(x, y);
-
-		float v_left = GetVelocityAtPoint(x + 0, y + 0, DIRECTION::HORIZONTAL);
-		float v_right = GetVelocityAtPoint(x + 1, y + 0, DIRECTION::HORIZONTAL);
-		float v_down = GetVelocityAtPoint(x + 0, y + 1, DIRECTION::VERTICAL);
-		float v_up = GetVelocityAtPoint(x + 1, y + 1, DIRECTION::VERTICAL);
 
 		float p_left = vector_field[x - 1][y + 0].pressure * p.flow_left;
 		float p_right = vector_field[x + 1][y + 0].pressure * p.flow_right;
 		float p_down = vector_field[x + 0][y - 1].pressure * p.flow_down;
 		float p_up = vector_field[x + 0][y + 1].pressure * p.flow_up;
 
-		float VelSum = (v_up - v_down + v_right - v_left);
+		float VelSum = vector_field[x][y].divergence*size;
 		float PressureSum = p_up + p_down + p_left + p_right;
 		GetPressureAtPoint(x, y) = (PressureSum - (size * rho / dt) * VelSum) /p.fluidEdgeCount;
 	}
@@ -127,7 +117,7 @@ Pressure FIELD::PrepPressure(int x, int y)
 		p.fluidEdgeCount += 1;
 		p.flow_left = 1;
 	}
-	if (IsBorder(x - 1, y - 1) == Material::WATER)
+	if (IsBorder(x + 0, y - 1) == Material::WATER)
 	{
 		p.fluidEdgeCount += 1;
 		p.flow_down = 1;
@@ -146,39 +136,73 @@ Pressure FIELD::PrepPressure(int x, int y)
 	return p;
 }
 
+float FIELD::BilinearPos(float f[], int w, int h, float x, float y)
+{
 
+	x = std::clamp(x, 0.0f, float(w - 1));			//stay in boundary
+	y = std::clamp(y, 0.0f, float(h - 1));
+
+	int i = std::min(int(x), w - 2);
+	int j = std::min(int(y), h - 2);
+
+	float left = x - i;
+	float down = y - j;
+
+	float a = f[i + (j * w)]	 * (1 - left) + f[i + 1 + j * w] * left;
+	float b = f[i + (j + 1) * w] * (1 - left) + f[i + 1 + (j + 1) * w] * left;
+
+	return a * (1 - down) + b * down;
+}
+
+float FIELD::SampleX(float x, float y) { return BilinearPos(VelocityX, resx + 1, resy, x, y); }
+float FIELD::SampleY(float x, float y) { return BilinearPos(VelocityY, resx, resy + 1, x, y); }
 
 void FIELD::VirtualLagrangian()
 {
+	float K = dt / size;
 	for (int x = 1; x < resx;x++)
+	{
+		for (int y = 0; y < resy;y++)
+		{
+			float v_left = GetVelocityAtPoint(x + 0, y + 0, DIRECTION::HORIZONTAL);
+			float v_down = GetVelocityAtPoint(x + 0, y + 1, DIRECTION::VERTICAL);
+
+			if (!IsSolidU(x, y))
+			{	
+				float px = x, py = y + 0.5f;
+
+				float v = SampleY(px, py);
+				float back_x = px - K * v_left;
+				float back_y =  py - K * v;
+
+				TVelocityX[IndexU(x, y)] = SampleX(back_x, back_y);
+			}
+			else
+			{
+				TVelocityX[IndexU(x, y)] = 0.0f;
+			}
+		}
+	}
+	for (int x = 0; x < resx; x++)
 	{
 		for (int y = 1; y < resy;y++)
 		{
 			float v_left = GetVelocityAtPoint(x + 0, y + 0, DIRECTION::HORIZONTAL);
-			float v_right = GetVelocityAtPoint(x + 1, y + 0, DIRECTION::HORIZONTAL);
 			float v_down = GetVelocityAtPoint(x + 0, y + 1, DIRECTION::VERTICAL);
-			float v_up = GetVelocityAtPoint(x + 1, y + 1, DIRECTION::VERTICAL);
 
-			int index = Index(x, y);
-
-			if (IsBorder(x, y) == Material::WATER)
-			{	
-				float back_x = x - (v_left * dt);
-				float back_y = y - (v_down * dt);
-
-				if (back_x < 0)
-				{
-					TVelocityX[index] = in_v;
-					TVelocityY[index] = 0.0f;
-				}
-				else
-				{
-					TVelocityX[index] = v_left;
-					TVelocityY[index] = v_down;
-				}
-			}
-			else if (IsBorder(x, y) == Material::OBJECT)
+			if (!IsSolidV(x, y))
 			{
+				float px = x + 0.5f, py = y;
+
+				float u = SampleX(px, py);
+				float back_x = px - K * u;
+				float back_y = py - K * v_down;
+
+				TVelocityY[IndexV(x, y)] = SampleY(back_x, back_y);
+			}
+			else
+			{
+				TVelocityY[IndexV(x, y)] = 0.0f;
 			}
 		}
 	}
@@ -186,20 +210,76 @@ void FIELD::VirtualLagrangian()
 	SwapBuffers(VelocityY, TVelocityY);
 }
 
+void FIELD::Diffuse()
+{
+	const float nu = mu / rho;
+	const float a = nu * dt / (size * size);
+
+	// a must satisfy a <= 0.25 for explicit stability, checked in Solve()
+
+	for (int y = 1; y < resy - 1; y++)
+	{
+		for (int x = 1; x < resx; x++)
+		{
+			if (vector_field[x - 1][y].material == Material::OBJECT ||
+				vector_field[x][y].material == Material::OBJECT)
+				continue;                       
+
+			float centr = VelocityX[IndexU(x, y)];
+			float left = VelocityX[IndexU(x - 1, y)];
+			float right = VelocityX[IndexU(x + 1, y)];
+			float down = VelocityX[IndexU(x, y - 1)];
+			float up = VelocityX[IndexU(x, y + 1)];
+
+			TVelocityX[IndexU(x, y)] = centr + a * (left + right + down + up - 4.0f * centr);
+		}
+	}
+
+	for (int y = 1; y < resy; y++)
+	{
+		for (int x = 1; x < resx - 1; x++)
+		{
+			if (vector_field[x][y - 1].material == Material::OBJECT ||
+				vector_field[x][y].material == Material::OBJECT)
+				continue;
+
+			float centr = VelocityY[IndexV(x, y)];
+			float left = VelocityY[IndexV(x - 1, y)];
+			float right = VelocityY[IndexV(x + 1, y)];
+			float down = VelocityY[IndexV(x, y - 1)];
+			float up = VelocityY[IndexV(x, y + 1)];
+
+			TVelocityY[IndexV(x, y)] = centr + a * (left + right + down + up - 4.0f * centr);
+		}
+	}
+
+	SwapBuffers(VelocityX,TVelocityX);
+	SwapBuffers(VelocityY, TVelocityY);
+}
+
 void FIELD::UpdateVelocities()
 {
 	for (int x = 1; x < resx;x++)
 	{
-		for (int y = 1; y < resy;y++)
+		for (int y = 0; y < resy;y++)
 		{	
-			if (vector_field[x][y].material == Material::WATER)
+			if (!IsSolidV(x,y))
 			{
-				VelocityX[Index(x, y)] -=  dt * (GetPressureAtPoint(x + 1, y) - GetPressureAtPoint(x, y)) / size;
-				VelocityY[Index(x, y)] -= dt * (GetPressureAtPoint(x, y + 1) - GetPressureAtPoint(x, y)) / size;
+				VelocityX[IndexU(x, y)] -=  (dt/rho) * (GetPressureAtPoint(x, y) - GetPressureAtPoint(x-1, y)) / size;
 			}
 		}
 	}
-	
+	for (int x = 0; x < resx;x++)
+	{
+		for (int y = 1; y < resy;y++)
+		{
+			if (!IsSolidU(x, y))
+			{
+				VelocityY[IndexV(x, y)] -= (dt / rho) * (GetPressureAtPoint(x, y) - GetPressureAtPoint(x, y - 1)) / size;
+			}
+		}
+	}
+
 }
 
 
@@ -220,17 +300,22 @@ void FIELD::Gauss_Seidel()
 			float r_2 = 0.0f;			// residual norm (sqrt sum of r^2)
 			float s_2 = 0.0f;			//source term
 
-			for (int x = 0; x < resx; x++)
+			for (int x = 1; x < resx-1; x++)
 			{
-				for (int y = 0; y < resy; y++)
+				for (int y = 1; y < resy-1; y++)
 				{
-					r_2 += std::pow(CalcR_p(x, y), 2);
-					s_2 += std::pow(CalcS_p(x, y), 2);
+					float r_p = CalcR_p(x, y);
+					r_2 += r_p*r_p;
+					float s_p = CalcS_p(x, y);
+					s_2 += s_p * s_p;
 
 					SolvePressureCell(x, y);
 				}
 			}
-
+			if (s_2 == 0)
+			{
+				s_2 = 1;
+			}
 			r_rel = std::pow(r_2, 0.5f) / std::pow(s_2, 0.5f);
 		}
 		else
@@ -259,7 +344,7 @@ float FIELD::CalcR_p(int x, int y)
 
 	float SumPressures = p_left + p_right + p_down + p_up - 4 * this_p;
 
-	return (SumPressures) / (size * size) - CalcR_p(x,y); //sum of pressures divided by area - sourceterm of particle
+	return (SumPressures) / (size * size) - CalcS_p(x,y); //sum of pressures divided by area - sourceterm of particle
 }
 
 float FIELD::CalcS_p(int x, int y)
@@ -280,12 +365,9 @@ void FIELD::Divergence_Vitesse_Cell(int x, int y)		//divergence at cell index x 
 
 float& FIELD::GetVelocityAtPoint(int x, int y, DIRECTION direction)
 {
-	int index = Index(x,y);
 
-	if (direction == DIRECTION::HORIZONTAL)
-		return VelocityX[index];
-	else
-		return VelocityY[index];
+	return (direction == DIRECTION::HORIZONTAL) ? VelocityX[IndexU(x, y)]
+		: VelocityY[IndexV(x, y)];
 }
 
 float& FIELD::GetPressureAtPoint(int x, int y)
@@ -297,6 +379,21 @@ Material FIELD::IsBorder(int x, int y)
 {
 	return vector_field[x][y].material;
 }
+
+bool FIELD::IsSolidU(int x, int y)
+{
+	bool left = (x > 0) && IsBorder(x - 1, y) != Material::WATER;
+	bool right = (x < resx) && IsBorder(x, y) != Material::WATER;
+	return right || left;
+}
+
+bool FIELD::IsSolidV(int x, int y)
+{
+	bool left = (y > 0) && IsBorder(x, y - 1) != Material::WATER;
+	bool right = (y < resy) && IsBorder(x, y) != Material::WATER;
+	return right || left;
+}
+
 void FIELD::InFlow(float speed_ms)
 {
 	for (int i = 1; i < resy - 1;i++)
@@ -306,7 +403,7 @@ void FIELD::InFlow(float speed_ms)
 
 	in_v = speed_ms;
 
-	dt = floor(5 * size / speed_ms);						//time interval calculations forward Euler
+	dt = CFL * size / speed_ms;						//time interval calculations forward Euler
 }
 
 void FIELD::FindBoard(ObjectMask object, int posx, int posy)
@@ -330,7 +427,7 @@ void FIELD::EnableBorder()
 		vector_field[i][0].material = Material::FREE_WALL;
 		vector_field[i][resy - 1].material = Material::FREE_WALL;
 	}
-	for (int j; j < resy; j++)
+	for (int j = 0; j < resy; j++)
 	{
 		vector_field[resx - 1][j].material = Material::FREE_WALL;
 	}
@@ -341,9 +438,13 @@ void FIELD::ViewVelocity(int x, int y, DIRECTION direction)
 	std::cout << GetVelocityAtPoint(x, y, direction) << std::endl;
 }
 
-int FIELD::Index(int x, int y)
+int FIELD::IndexV(int x, int y)
 {
 	return x + y * resx;
+}
+int FIELD::IndexU(int x, int y)
+{
+	return x + y * (resx+1);
 }
 
 FIELD::~FIELD()
@@ -354,7 +455,7 @@ FIELD::~FIELD()
 	delete[] TVelocityX;
 	delete[] TVelocityY;
 
-	for (int i = 0; i < resy; i++)
+	for (int i = 0; i < resx; i++)
 		delete[] vector_field[i];
 	delete[] vector_field;
 }
@@ -366,26 +467,23 @@ FIELD3D::FIELD3D(int pos1x, int pos1y, int Resx, int Resy, int Size, std::string
 
 float FIELD3D::SolveAll()
 {
-	float total_force;
+	float total_force = 0;
 
 	rapidobj::Result result = rapidobj::ParseFile(path);
 
 	
 
-	for ( int i = 0; i < 30; i++)
+	for ( int i = 0; i < 1000; i++)
 	{	
 		ObjectMask object = FindCrossSection(result, i, size);
-		FIELD field(pos1x, pos1y, resx, resy, size, 1, 1e-3);
+
+		FIELD field(pos1x, pos1y, resx, resy, size, 1, 1e-3f);
 		field.EnableBorder();
 		field.FindBoard(object, 50, 50);
-
-		field.InFlow(0.2);
-
+		field.InFlow(0.2f);
 		field.Solve();
 
 		total_force += field.IntegrateFriction();
-
-
 	}
 	return total_force;
 }

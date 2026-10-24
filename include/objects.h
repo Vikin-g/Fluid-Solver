@@ -27,16 +27,17 @@ struct Pressure
 
 struct CELL
 {
-	int rel_x;
-	int rel_y;
+	int rel_x = 0;
+	int rel_y = 0;
 	
-	float divergence;
+	float divergence = 0;
 
 	Material material;
 
-	float pressure;
-
-	CELL(int rel_x = 0, int rel_y = 0);
+	float pressure = 0;
+	
+	CELL() = default;
+	CELL(int rel_x, int rel_y);
 };
 
 template<typename T>
@@ -53,18 +54,23 @@ private:
 
 	int resx;
 	int resy;
-	int size;
+	float size;
 
 	int InPosx;
 	int InPosy;
 
 	float rho;
 
+	float CFL = 0.5;
+
+	int time;
+	float dt;
+
 	float u_p;					// uncertainty for pressure
 
 	float in_v;
 
-	float mu = 1e-3;
+	float mu = 1e-3f;
 
 	float* TVelocityX;
 	float* TVelocityY;
@@ -78,13 +84,12 @@ private:
 
 	float& GetPressureAtPoint(int x, int y);
 
-	int Index(int x, int y);
+	int IndexU(int x, int y);
+	int IndexV(int x, int y);
 
 	void SolvePressureCell(int x, int y);
 
 	void UpdateVelocities();
-
-
 
 	void Gauss_Seidel();
 
@@ -92,16 +97,18 @@ private:
 
 	Pressure PrepPressure(int x, int y);
 
+	void Diffuse();
+
 	void Solve3D();
 
-	int time;
-	float dt;
+	float BilinearPos(float f[], int w, int height, float x, float y);
+
 
 public:
 
 	CELL** vector_field;
 
-	FIELD(int pos1x, int pos1y, int Resx, int Resy, int Size, float rho, float U_p);
+	FIELD(int pos1x, int pos1y, int Resx, int Resy, float Size, float rho, float U_p);
 	~FIELD();
 
 	void Solve();
@@ -123,6 +130,12 @@ public:
 	void ViewVelocity(int x, int y, DIRECTION direction);
 
 	void FindBoard(ObjectMask, int, int);
+
+	float SampleX(float x, float y);
+	float SampleY(float x, float y);
+
+	bool IsSolidV(int x, int y);
+	bool IsSolidU(int x, int y);
 };
 
 //------------------------------------FIELD 3D----------------------------------
@@ -143,7 +156,6 @@ public:
 	std::string path;
 
 	FIELD3D(int pos1x, int pos1y, int Resx, int Resy, int Size, std::string Path, float v_in);
-	~FIELD3D();
 
 	float SolveAll();
 };

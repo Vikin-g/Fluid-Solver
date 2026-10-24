@@ -1,11 +1,10 @@
+#pragma once
+
 //---------------------------------ChatGPT----------------------------------------
+
 #include "rapidobj/rapidobj.hpp"
 
-#include <algorithm>
-#include <array>
-#include <cmath>
 #include <stdexcept>
-#include <vector>
 
 using ObjectMask = std::vector<std::vector<bool>>;
 
@@ -19,7 +18,7 @@ struct Segment
     Point2D a, b;
 };
 
-ObjectMask FindCrossSection(
+inline ObjectMask FindCrossSection(
     const rapidobj::Result& obj,
     int height,
     int resolution)

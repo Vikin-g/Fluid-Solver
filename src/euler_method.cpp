@@ -11,7 +11,7 @@ enum class PLANCHE
 
 int main()
 {
-	FIELD3D field(1, 1, 940, 490, 0.1, "../resources/belly.obj",1);
-	field.SolveAll();
+	FIELD3D field(1, 1, 940, 490, 0.1f, "../resources/surf+board.obj",1);
+	std::cout << field.SolveAll() << std::endl;
 	return 0;
 }
