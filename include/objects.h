@@ -149,13 +149,18 @@ public:
 	int pos1y;
 	int resx;
 	int resy;
-	int size;
+	float size;				//m per cell
+
+	float rho = 1000*size; 
+
+	float size_x = 0.177f;
+	float size_y = 0.039f;
 
 	float v_in;
 
 	std::string path;
 
-	FIELD3D(int pos1x, int pos1y, int Resx, int Resy, int Size, std::string Path, float v_in);
+	FIELD3D(int pos1x, int pos1y, int Resx, int Resy, float Size, std::string Path, float v_in);
 
 	float SolveAll();
 };
