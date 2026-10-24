@@ -52,22 +52,74 @@ void FIELD::CreateField()
 	}
 
 	VelocityX = new float[(resx + 1) * resy]();									
-	VelocityY = new float[resx * (resy + 1)];
+	VelocityY = new float[resx * (resy + 1)]();
 	
-	TVelocityX = new float[(resx + 1) * resy];
-	TVelocityY = new float[resx * (resy + 1)];
+	TVelocityX = new float[(resx + 1) * resy]();
+	TVelocityY = new float[resx * (resy + 1)]();
 }
 
 void FIELD::Solve()
 {
-	for (int i = 0; i < time; i++)
+	auto allFinite = [&](int step)
+	{
+		for (int y = 0; y < resy; y++)
+		{
+			for (int x = 0; x <= resx; x++)
+			{	
+				if (!std::isfinite(VelocityX[IndexU(x, y)]))
+				{
+					std::cerr << "step " << step << ": non-finite u at (" << x << "," << y << ")\n";
+					return false;
+				}
+			}
+		}
+		for (int y = 0; y <= resy; y++)
+		{
+			for (int x = 0; x < resx; x++)
+			{
+				if (!std::isfinite(VelocityY[IndexV(x, y)]))
+				{
+					std::cerr << "step " << step << ": non-finite v at (" << x << "," << y << ")\n";
+					return false;
+				}
+			}
+		}
+		for (int x = 0; x < resx; x++)
+			for (int y = 0; y < resy; y++)
+				if (!std::isfinite(vector_field[x][y].pressure))
+				{
+					std::cerr << "step " << step << ": non-finite p at (" << x << "," << y << ")\n";
+					return false;
+				}
+		return true;
+	};
+
+	for (int i = 0; i < steps; i++)
 	{
 		VirtualLagrangian();
 		Diffuse();
 		Gauss_Seidel();
 		UpdateVelocities();
 		
+		if (i % 10 == 0 && !allFinite(i))
+			return;
+	}
 
+	if (!allFinite(steps))
+		return;
+
+	static bool report = true;
+	if (report)
+	{
+		float umax = 0.0f, pmax = 0.0f;
+		for (int y = 0; y < resy; y++)
+			for (int x = 0; x <= resx; x++)
+				umax = std::max(umax, std::fabs(VelocityX[IndexU(x, y)]));
+		for (int x = 0; x < resx; x++)
+			for (int y = 0; y < resy; y++)
+				pmax = std::max(pmax, std::fabs(vector_field[x][y].pressure));
+		std::cerr << "max|u|=" << umax << " max|p|=" << pmax << "\n";
+		report = false;
 	}
 }
 
@@ -78,15 +130,21 @@ float FIELD::IntegrateFriction()			//Integrate friction in x-component
 	{
 		for (int y = 1; y < resy-1; y++)
 		{
+			if (IsBorder(x, y) != Material::OBJECT)
+				continue;
 			Pressure p = PrepPressure(x, y);
-			if (IsBorder(x, y) == Material::OBJECT && p.flow_right == 1)
+			if (p.flow_left == 1)
 			{
-				float gradient_y = (GetVelocityAtPoint(x, y + 1, DIRECTION::HORIZONTAL) - GetVelocityAtPoint(x, y, DIRECTION::HORIZONTAL)) / size;
-				float gradient_x = (GetVelocityAtPoint(x + 1, y, DIRECTION::HORIZONTAL) - GetVelocityAtPoint(x, y, DIRECTION::HORIZONTAL)) / size;
-				float sigma_x = -GetPressureAtPoint(x + 1, y) + 2 * mu * gradient_x;
-				float sigma_y = mu * gradient_y;
-
-				Fx += (sigma_x + sigma_y) * size;
+				Fx += GetPressureAtPoint(x-1,y) * size;
+			}
+			if (p.flow_right == 1)
+			{
+				Fx -= GetPressureAtPoint(x + 1, y) * size;
+			}
+			if (p.flow_up == 1)
+			{
+				float u = 0.5f * (VelocityX[IndexU(x, y + 1)] + VelocityX[IndexU(x + 1, y + 1)]);
+				Fx += 2.0f * mu * u;
 			}
 		}
 	}
@@ -158,8 +216,8 @@ float FIELD::BilinearPos(float f[], int w, int h, float x, float y)
 	return a * (1 - down) + b * down;
 }
 
-float FIELD::SampleX(float x, float y) { return BilinearPos(VelocityX, resx + 1, resy, x, y); }
-float FIELD::SampleY(float x, float y) { return BilinearPos(VelocityY, resx, resy + 1, x, y); }
+float FIELD::SampleX(float x, float y) { return BilinearPos(VelocityX, resx + 1, resy, x, y - 0.5f); }
+float FIELD::SampleY(float x, float y) { return BilinearPos(VelocityY, resx, resy + 1, x - 0.5f, y); }
 
 void FIELD::VirtualLagrangian()
 {
@@ -168,14 +226,14 @@ void FIELD::VirtualLagrangian()
 	{
 		for (int y = 0; y < resy;y++)
 		{
-			float v_left = GetVelocityAtPoint(x + 0, y + 0, DIRECTION::HORIZONTAL);
-			float v_down = GetVelocityAtPoint(x + 0, y + 1, DIRECTION::VERTICAL);
 
 			if (!IsSolidU(x, y))
 			{	
 				float px = x, py = y + 0.5f;
 
+				float v_left = GetVelocityAtPoint(x + 0, y + 0, DIRECTION::HORIZONTAL);
 				float v = SampleY(px, py);
+
 				float back_x = px - K * v_left;
 				float back_y =  py - K * v;
 
@@ -191,14 +249,13 @@ void FIELD::VirtualLagrangian()
 	{
 		for (int y = 1; y < resy;y++)
 		{
-			float v_left = GetVelocityAtPoint(x + 0, y + 0, DIRECTION::HORIZONTAL);
-			float v_down = GetVelocityAtPoint(x + 0, y + 1, DIRECTION::VERTICAL);
-
 			if (!IsSolidV(x, y))
 			{
 				float px = x + 0.5f, py = y;
 
 				float u = SampleX(px, py);
+				float v_down = GetVelocityAtPoint(x + 0, y + 1, DIRECTION::VERTICAL);
+
 				float back_x = px - K * u;
 				float back_y = py - K * v_down;
 
@@ -225,8 +282,7 @@ void FIELD::Diffuse()
 	{
 		for (int x = 1; x < resx; x++)
 		{
-			if (vector_field[x - 1][y].material == Material::OBJECT ||
-				vector_field[x][y].material == Material::OBJECT)
+			if (IsSolidU(x,y))
 				continue;                       
 
 			float centr = VelocityX[IndexU(x, y)];
@@ -243,8 +299,7 @@ void FIELD::Diffuse()
 	{
 		for (int x = 1; x < resx - 1; x++)
 		{
-			if (vector_field[x][y - 1].material == Material::OBJECT ||
-				vector_field[x][y].material == Material::OBJECT)
+			if (IsSolidV(x,y))
 				continue;
 
 			float centr = VelocityY[IndexV(x, y)];
@@ -292,8 +347,6 @@ void FIELD::Gauss_Seidel()
 {
 	float r_rel = 1.0;			//relative residual
 
-	int i = 0;
-
 	for (int x = 0; x < resx; x++)
 	{
 		for (int y = 0; y < resy; y++)
@@ -302,61 +355,55 @@ void FIELD::Gauss_Seidel()
 		}
 	}
 
-	while (r_rel > u_p)
+	for (int i = 0; i < 50; i++)
 	{
-
-		if (i == 50)
-			break;
-		else if (i % 5 == 0)
+		for (int x = 0; x < resx - 1; x++)		// if x or y in boundary: solve pressure neighbour cells don't exist
 		{
-			float r_2 = 0.0f;			// residual norm (sqrt sum of r^2)
-			float s_2 = 0.0f;			//source term
-
-			for (int x = 1; x < resx-2; x++)
+			for (int y = 0; y < resy - 1; y++)
 			{
-				for (int y = 1; y < resy-2; y++)
-				{
-					float r_p = CalcR_p(x, y);
-					r_2 += r_p*r_p;
-					float s_p = CalcS_p(x, y);
-					s_2 += s_p * s_p;
-
-					SolvePressureCell(x, y);
-				}
-			}
-			if (s_2 == 0)
-			{
-				s_2 = 1;
-			}
-			r_rel = std::pow(r_2, 0.5f) / std::pow(s_2, 0.5f);
-		}
-		else
-		{
-			for (int x = 1; x < resx;x++)
-			{
-				for (int y = 1;y < resy;y++)
-				{
-					SolvePressureCell(x, y);
-				}
+				SolvePressureCell(x, y);
 			}
 		}
-		i++;
+		
+		if (i % 5 == 0)
+		{
+			double r_2 = 0.0;			// residual norm (sqrt sum of r^2)
+			double s_2 = 0.0;			//source term
+
+			for (int x = 1; x < resx-1; x++)
+			{
+				for (int y = 1; y < resy-1; y++)
+				{
+					if (IsBorder(x, y) == Material::WATER)
+					{
+						double r_p = CalcR_p(x, y);
+						double s_p = CalcS_p(x, y);
+
+						r_2 += r_p * r_p;
+						s_2 += s_p * s_p;
+					}
+				}
+			}
+			if (s_2 == 0.0)
+			{
+				break;
+			}
+			if (std::sqrt(r_2 / s_2) < u_p)
+				break;
+		}
 	}
 }
 
 float FIELD::CalcR_p(int x, int y)
 {
-	float p_left = GetPressureAtPoint(x - 1,y + 0);
-	float p_right = GetPressureAtPoint(x + 1,y + 0);
-	float p_down = GetPressureAtPoint(x + 0,y - 1);
-	float p_up = GetPressureAtPoint(x + 0,y + 1);
+	Pressure p = PrepPressure(x, y);
 
-	float this_divergence = vector_field[x][y].divergence;
-	float this_p = GetPressureAtPoint(x,y);
+	float sum = vector_field[x - 1][y].pressure * p.flow_left
+		+ vector_field[x + 1][y].pressure * p.flow_right
+		+ vector_field[x][y - 1].pressure * p.flow_down
+		+ vector_field[x][y + 1].pressure * p.flow_up;
 
-	float SumPressures = p_left + p_right + p_down + p_up - 4 * this_p;
-
-	return (SumPressures) / (size * size) - CalcS_p(x,y); //sum of pressures divided by area - sourceterm of particle
+	return (sum - p.fluidEdgeCount * GetPressureAtPoint(x,y)) / (size * size) - CalcS_p(x,y); //sum of pressures divided by area - sourceterm of particle
 }
 
 float FIELD::CalcS_p(int x, int y)
@@ -413,26 +460,40 @@ bool FIELD::IsSolidV(int x, int y)
 
 void FIELD::InFlow(float speed_ms)
 {
-	for (int i = 1; i < resy - 1;i++)
+	if (speed_ms <= 0.0f)
+		throw std::invalid_argument("Vitesse Inflow dout être positive");
+
+	for (int x = 0; x <= resx; x++)
 	{
-		GetVelocityAtPoint(0, i, DIRECTION::HORIZONTAL) = speed_ms;
+		for (int y = 0; y < resy; y++)
+		{
+			VelocityX[IndexU(x, y)] = IsSolidU(x, y) ? 0.0f : speed_ms;
+		}
 	}
 
 	in_v = speed_ms;
 
 	dt = CFL * size / speed_ms;						//time interval calculations forward Euler
+
+	const float a = (mu / rho) * dt / (size * size);
+	if (a > 0.25f)
+		std::cerr << "Avertissement: nombre de diffusion " << a << " > 0.25, Diffuse() est instable!" << std::endl;
 }
 
 void FIELD::FindBoard(ObjectMask object, int posx, int posy)
 {
-	for (int x = 0; x < object.size(); x++)
+	for (int x = 0; x < (int)object.size(); x++)
 	{
-		for (int y = 0; y < object[x].size(); y++)
+		for (int y = 0; y < (int)object[x].size(); y++)
 		{
-			if (object[x][y])
-			{
-				vector_field[x + posx][y + posy].material = Material::OBJECT;
-			}
+			if (!object[x][y])
+				continue;
+
+			const int fx = x + posx, fy = y + posy;
+			if (fx < 0 || fx > resx || fy < 0 || fy > resy)
+				continue;											// write on outside field
+
+			vector_field[fx][fy].material = Material::OBJECT;
 		}
 	}
 }
@@ -482,10 +543,30 @@ float FIELD3D::SolveAll()
 {
 	float total_force = 0;
 
-	rapidobj::Result result = rapidobj::ParseFile(path);
+	rapidobj::Result result = rapidobj::ParseFile(path, rapidobj::MaterialLibrary::Ignore());;
 
-	Bounds3D b   = ComputeBounds(result);
-	float to_m   = ComputeScale(b, 0.177f);
+	if (result.error)
+	{
+		std::cerr << "OBJ load failed: " << result.error.code.message()
+			<< " (line " << result.error.line_num << ": " << result.error.line << ")\n";
+		return 0.0f;
+	}
+
+	
+	Bounds3D b0 = ComputeBounds(result);
+	const int nx0 = 100;
+	const double cell0 = b0.width() / nx0;
+	const int ny0 = (int)std::ceil(b0.height() / cell0);
+	ObjectMask m0 = FindCrossSection(result, b0, 0.5 * (b0.minz + b0.maxz), nx0, ny0, cell0);
+
+	const double tilt = EstimateTilt(m0);          // about -0.5 rad (-30 degrees) for your slice
+	std::cerr << "tilt: " << tilt * 180.0 / 3.14159265 << " deg\n";
+	RotateAboutZ(result, -tilt);
+
+	// From here on, everything uses the levelled mesh
+	Bounds3D b = ComputeBounds(result);
+	float to_m = ComputeScale(b, 0.177f);
+
 	if (!ScaleMatches(b, to_m, 0.039f)) { /* axes are not what you think */ }
 	
 	GridDims obj = ComputeObjectGrid(b, to_m, size);   // e.g. 89 x 20
@@ -493,10 +574,25 @@ float FIELD3D::SolveAll()
 	int resy = CellsForLength(0.3f, size);
 	int posx, posy;
 	ComputePlacement(resy, obj, 0.2f, size, posx, posy);
-	if (!ObjectFits(resx, resy, obj, posx, posy)) { /* enlarge domain */ }
+	if (!ObjectFits(resx, resy, obj, posx, posy)) 
+	{
+		std::cerr << "Object (" << obj.nx << "x" << obj.ny << ") does not fit in "
+			<< resx << "x" << resy << " at " << posx << "," << posy << "\n";
+		return 0.0f;
+	}
 	
-	float dz = size;
+	float dz = 0.005f;
 	int slices = ComputeSliceCount(b, to_m, dz);
+
+	ObjectMask mid = FindCrossSection(result, b, SliceZ(b, to_m, dz, slices / 2),
+		obj.nx, obj.ny, size / to_m);
+	std::cerr << "mid-slice thickness: " << MaxThickness(mid) * size
+		<< " m (expected about 0.039)\n";
+	//PrintMask(mid);
+	
+
+
+
 	for (int k = 0; k < slices; k++) {
 		float z = SliceZ(b, to_m, dz, k);
 		ObjectMask m = FindCrossSection(result, b, z, obj.nx, obj.ny, size / to_m);
@@ -506,7 +602,9 @@ float FIELD3D::SolveAll()
 		field.FindBoard(m, posx, posy);
 		field.InFlow(v_in);
 		field.Solve();
-		total_force += field.IntegrateFriction() * dz;  // N/m * m = N
+		float t_force = field.IntegrateFriction() * dz;  // N/m * m = N
+		//std::cout << "Slice " << k << ": " << t_force << std::endl;
+			total_force += t_force;
 	}
 	return total_force;
 }

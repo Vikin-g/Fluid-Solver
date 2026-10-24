@@ -63,7 +63,7 @@ private:
 
 	float CFL = 0.5;
 
-	int time;
+	int steps = 200;
 	float dt;
 
 	float u_p;					// uncertainty for pressure

@@ -6,7 +6,10 @@
 #include <cmath>
 #include <cfloat>
 #include <stdexcept>
-#include <rapidobj/rapidobj.hpp>
+#include <array>
+#include <iostream>
+
+#include "rapidobj/rapidobj.hpp"
 
 
 using ObjectMask = std::vector<std::vector<bool>>;
@@ -19,6 +22,17 @@ struct Point2D
 struct Segment
 {
     Point2D a, b;
+};
+
+struct Bounds3D
+{
+    float minx = FLT_MAX, maxx = -FLT_MAX;
+    float miny = FLT_MAX, maxy = -FLT_MAX;
+    float minz = FLT_MAX, maxz = -FLT_MAX;
+
+    float width()  const { return maxx - minx; }
+    float height() const { return maxy - miny; }
+    float depth()  const { return maxz - minz; }
 };
 
 inline ObjectMask FindCrossSection(
@@ -73,25 +87,32 @@ inline ObjectMask FindCrossSection(
 
         for (unsigned char faceSize : mesh.num_face_vertices)
         {
-            if (faceSize != 3)
+            if (faceSize < 3)
             {
                 offset += faceSize;
                 continue;
             }
 
+            // Fan triangulation: (v0, vk, vk+1) for k = 1 .. faceSize-2.
+            // Works for triangles, quads and any convex polygon.
             const auto a = vertex(mesh.indices[offset].position_index);
-            const auto b = vertex(mesh.indices[offset + 1].position_index);
-            const auto c = vertex(mesh.indices[offset + 2].position_index);
-            offset += 3;
 
-            Point2D pts[3];
-            int n = 0;
-            if (crossing(a, b, pts[n])) ++n;
-            if (crossing(b, c, pts[n])) ++n;
-            if (crossing(c, a, pts[n])) ++n;
+            for (int k = 1; k + 1 < faceSize; ++k)
+            {
+                const auto b = vertex(mesh.indices[offset + k].position_index);
+                const auto c = vertex(mesh.indices[offset + k + 1].position_index);
 
-            if (n == 2)
-                segments.push_back({ pts[0], pts[1] });
+                Point2D pts[3];
+                int n = 0;
+                if (crossing(a, b, pts[n])) ++n;
+                if (crossing(b, c, pts[n])) ++n;
+                if (crossing(c, a, pts[n])) ++n;
+
+                if (n == 2)
+                    segments.push_back({ pts[0], pts[1] });
+            }
+
+            offset += faceSize;
         }
     }
 
@@ -129,60 +150,13 @@ inline ObjectMask FindCrossSection(
     return mask;
 }
 
-ObjectMask ResampleMask(const ObjectMask& src, int nx, int ny, float threshold = 0.5f)
-{
-    ObjectMask dst(nx, std::vector<bool>(ny, false));
-    if (src.empty() || src[0].empty() || nx <= 0 || ny <= 0) return dst;
-
-    const int sw = (int)src.size();
-    const int sh = (int)src[0].size();
-
-    // Each destination cell covers this region of the source, in source cells
-    const float sx = float(sw) / nx;
-    const float sy = float(sh) / ny;
-
-    for (int x = 0; x < nx; x++)
-    {
-        for (int y = 0; y < ny; y++)
-        {
-            int x0 = (int)std::floor(x * sx);
-            int x1 = std::max(x0 + 1, (int)std::ceil((x + 1) * sx));   // at least one source cell
-            int y0 = (int)std::floor(y * sy);
-            int y1 = std::max(y0 + 1, (int)std::ceil((y + 1) * sy));
-
-            x1 = std::min(x1, sw);
-            y1 = std::min(y1, sh);
-
-            int filled = 0, total = 0;
-            for (int i = x0; i < x1; i++)
-                for (int j = y0; j < y1; j++)
-                {
-                    filled += src[i][j];
-                    total++;
-                }
-
-            dst[x][y] = total > 0 && float(filled) / total >= threshold;
-        }
-    }
-    return dst;
-}
-
 //----------------------------Claude-------------------------------------------
 
 
 // ---------------------------------------------------------------------------
 // 1. Bounding box of the whole mesh (model units). Compute ONCE, not per slice.
 // ---------------------------------------------------------------------------
-struct Bounds3D
-{
-    float minx = FLT_MAX, maxx = -FLT_MAX;
-    float miny = FLT_MAX, maxy = -FLT_MAX;
-    float minz = FLT_MAX, maxz = -FLT_MAX;
 
-    float width()  const { return maxx - minx; }
-    float height() const { return maxy - miny; }
-    float depth()  const { return maxz - minz; }
-};
 
 inline Bounds3D ComputeBounds(const rapidobj::Result& result)
 {
@@ -306,6 +280,82 @@ inline int MaxThickness(const ObjectMask& m)
     }
     return best;
 }
+
+inline void PrintMask(const ObjectMask& m)
+{
+    if (m.empty() || m[0].empty())
+    {
+        std::cerr << "(empty mask)\n";
+        return;
+    }
+
+    for (int y = (int)m[0].size() - 1; y >= 0; --y)    // print y upwards
+    {
+        for (size_t x = 0; x < m.size(); ++x)
+            std::cerr << (m[x][y] ? '#' : '.');
+        std::cerr << '\n';
+    }
+}
+
+// Orientation of the mask's long axis, in radians from +x, counter-clockwise
+// with y pointing up. Uses the second moments of the filled cells, so it works
+// for a solid band or a lens shape. Returns 0 for an empty mask.
+inline double EstimateTilt(const ObjectMask& m)
+{
+    double n = 0.0, sx = 0.0, sy = 0.0;
+    for (size_t x = 0; x < m.size(); ++x)
+        for (size_t y = 0; y < m[x].size(); ++y)
+            if (m[x][y]) { n += 1.0; sx += (double)x; sy += (double)y; }
+
+    if (n == 0.0)
+        return 0.0;
+
+    const double cx = sx / n, cy = sy / n;
+    double mu20 = 0.0, mu02 = 0.0, mu11 = 0.0;
+
+    for (size_t x = 0; x < m.size(); ++x)
+        for (size_t y = 0; y < m[x].size(); ++y)
+            if (m[x][y])
+            {
+                const double dx = (double)x - cx;
+                const double dy = (double)y - cy;
+                mu20 += dx * dx;
+                mu02 += dy * dy;
+                mu11 += dx * dy;
+            }
+
+    return 0.5 * std::atan2(2.0 * mu11, mu20 - mu02);
+}
+
+// Rotate every vertex about the Z axis (through the centre of the XY bounding
+// box). Z values are untouched, so slice heights stay the same.
+// Recompute Bounds3D and the scale afterwards.
+inline void RotateAboutZ(rapidobj::Result& result, double angle)
+{
+    auto& P = result.attributes.positions;
+    if (P.size() < 3)
+        return;
+
+    float minx = FLT_MAX, maxx = -FLT_MAX, miny = FLT_MAX, maxy = -FLT_MAX;
+    for (size_t i = 0; i + 2 < P.size(); i += 3)
+    {
+        minx = std::min(minx, P[i]);     maxx = std::max(maxx, P[i]);
+        miny = std::min(miny, P[i + 1]); maxy = std::max(maxy, P[i + 1]);
+    }
+
+    const double cx = 0.5 * (minx + maxx);
+    const double cy = 0.5 * (miny + maxy);
+    const double c = std::cos(angle), s = std::sin(angle);
+
+    for (size_t i = 0; i + 2 < P.size(); i += 3)
+    {
+        const double dx = P[i] - cx;
+        const double dy = P[i + 1] - cy;
+        P[i] = (float)(cx + dx * c - dy * s);
+        P[i + 1] = (float)(cy + dx * s + dy * c);
+    }
+}
+
 
 // Resample a mask onto nx x ny cells (grow or shrink).
 // Pass the WHOLE uncropped bounding-box bitmap, same size for every slice.
