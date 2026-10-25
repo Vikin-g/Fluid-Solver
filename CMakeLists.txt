@@ -29,8 +29,7 @@ add_executable(euler_method2D
 	${SOURCES}
 )
 
-target_compile_definitions("euler_method2D" PUBLIC RESOURCES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources/")
-#target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC RESOURCES_PATH="./resources/")
+target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC RESOURCES_PATH="./resources/")
 
 target_include_directories(euler_method2D PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 set(DEPS glfw GLEW::GLEW OpenGL::GL)
