@@ -292,9 +292,9 @@ void FIELD::Diffuse()
 	std::copy(VelocityY, VelocityY + resx * (resy + 1), TVelocityY);
 
 	const float nu = mu / rho;
-	const float a = nu * dt / (size * size);
+	const float a = nu * dt / (size * size);		//diffusion term
 
-	// a must satisfy a <= 0.25 for explicit stability, checked in Solve()
+	//  a <= 0.25 for explicit stability
 
 	for (int y = 1; y < resy - 1; y++)
 	{

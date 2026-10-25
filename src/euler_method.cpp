@@ -17,13 +17,9 @@ enum class PLANCHE
 int main()
 {
 	
-	std::string path = "../../../resources/surf_board.obj";
-	/*std::cerr << "Working dir: " << std::filesystem::current_path() << "\n";
-	std::cerr << "Path:        " << path << "\n";
-	std::cerr << "Exists:      " << std::filesystem::exists(path) << "\n";
-	*/
-
-	FIELD3D field(1, 1, 940, 490, 0.002f, path,1);
+	std::string path = "../../../resources/Surf1.obj";
+	
+	FIELD3D field(1, 1, 940, 490, 0.002f, path,1.224f);
 	try
 	{
 		float F = field.SolveAll();       // use your own variable names

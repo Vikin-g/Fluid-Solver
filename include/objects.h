@@ -70,7 +70,7 @@ private:
 
 	float in_v;
 
-	float mu = 1e-3f;
+	float mu = 1e-3f;			//Pa * s
 
 	float* TVelocityX;
 	float* TVelocityY;
