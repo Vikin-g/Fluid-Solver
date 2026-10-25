@@ -45,7 +45,9 @@ int main()
 	}
 	else
 		path = path2;
+
 	FIELD3D field(1, 1, 940, 490, 0.002f, path,1.224f);
+
 	try
 	{
 		float F = field.SolveAll();       // use your own variable names
