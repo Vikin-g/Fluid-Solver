@@ -17,14 +17,14 @@ enum class PLANCHE
 int main()
 {
 	
-	std::string path1 = "../../../resources/BellyUtilisée";
+	std::string path1 = "../../../resources/BellyUtilisee";
 	std::string path2 = "../../../resources/Belly3BigFin";
 
 	int n = 0;
 
 	std::string path;
 
-	std::cout << "Quelle planche voulez vous calculer?/nEcrivez 1 pour celle utilisée pour le TM et 2 pour une alternative avec une fin centrale plus longue: ";
+	std::cout << "Quelle planche voulez vous calculer?\nEcrivez 1 pour celle utilisee pour le TM et 2 pour une alternative avec une fin centrale plus longue: ";
 	while (n == 0)
 	{
 		if (!(std::cin >> n))
@@ -45,6 +45,13 @@ int main()
 	}
 	else
 		path = path2;
+
+	path += ".obj";
+
+	std::cerr << "path:   [" << path << "]\n"
+		<< "exists: " << std::filesystem::exists(path) << "\n";
+	for (const auto& e : std::filesystem::directory_iterator("../../../resources"))
+		std::cerr << "found:  [" << e.path().filename().string() << "]\n";
 
 	FIELD3D field(1, 1, 940, 490, 0.002f, path,1.224f);
 
