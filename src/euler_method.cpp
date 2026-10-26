@@ -1,9 +1,23 @@
-﻿// euler_method.cpp : Defines the entry point for the application.
-//
+﻿#define NOMINMAX                 // windows.h defines min/max macros that break std::min/std::max
+#define WIN32_LEAN_AND_MEAN
+
 #include <objects.h>
 
 #include <filesystem>
 #include <iostream>
+
+#include <windows.h>
+#include <filesystem>
+
+std::filesystem::path ExeDir()
+{
+	wchar_t buf[MAX_PATH];
+	DWORD n = GetModuleFileNameW(nullptr, buf, MAX_PATH);
+	return std::filesystem::path(std::wstring(buf, n)).parent_path();
+}
+
+// in main:
+std::string path = (ExeDir() / "resources" / "Belly3BigFin.obj").string();
 
 
 
@@ -22,31 +36,24 @@ int main()
 
 	int n = 0;
 
-	std::string path;
-
 	std::cout << "Quelle planche voulez vous calculer?\nEcrivez 1 pour celle utilisee pour le TM et 2 pour une alternative avec une fin centrale plus longue: ";
-	while (n == 0)
+	while (n != 1 && n != 2)
 	{
+		std::cout << "Quelle planche voulez vous calculer?\n"
+			"Ecrivez 1 pour celle utilisée pour le TM et 2 pour une alternative avec une fin centrale plus longue: ";
 		if (!(std::cin >> n))
 		{
-			std::cerr << "Vous devez fournir un nombre!!!"<<std::endl;
+			std::cerr << "Vous devez fournir un nombre!!!" << std::endl;
 			std::cin.clear();
 			std::cin.ignore(10000, '\n');
-
 			n = 0;
 		}
 	}
 
 	std::cout << std::endl;
-
-	if (n == 1)
-	{
-		path = path1;
-	}
-	else
-		path = path2;
-
-	path += ".obj";
+	
+	const char* files[] = { "BellyUtilisee.obj", "Belly3BigFin.obj" };
+	std::string path = (ExeDir() / "resources" / files[n - 1]).string();
 
 	std::cerr << "path:   [" << path << "]\n"
 		<< "exists: " << std::filesystem::exists(path) << "\n";

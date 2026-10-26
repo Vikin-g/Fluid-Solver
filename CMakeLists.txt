@@ -29,6 +29,11 @@ add_executable(euler_method2D
 	${SOURCES}
 )
 
+add_custom_command(TARGET euler_method2D POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/resources"
+        "$<TARGET_FILE_DIR:euler_method2D>/resources")
+
 target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC RESOURCES_PATH="./resources/")
 
 target_include_directories(euler_method2D PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/")
