@@ -30,7 +30,8 @@ enum class PLANCHE
 
 int main()
 {
-	
+	std::filesystem::current_path(ExeDir());
+
 	std::string path1 = "../../../resources/BellyUtilisee";
 	std::string path2 = "../../../resources/Belly3BigFin";
 
@@ -67,10 +68,9 @@ int main()
 		float F = field.SolveAll();       // use your own variable names
 		std::cout << F << std::endl;
 	}
-	catch (const std::exception& e)
-	{
-		std::cerr << "exception: " << e.what() << std::endl;
-	}
+	catch (const std::exception& e) { std::cerr << "exception: " << e.what() << std::endl; return 1; }
+	catch (...) { std::cerr << "unknown exception" << std::endl; return 1; }
+
 
 	return 0;
 }
